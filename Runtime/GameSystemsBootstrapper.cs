@@ -38,7 +38,9 @@ namespace Wokarol.GameSystemsLocator
             var builder = ConfigureGameSystems();
             var systemsObject = CreateSystems(temporaryHolder, builder);
 
+            GameSystems.Clear();
             GameSystems.Initialize(systemsObject);
+
             return systemsObject;
         }
 
