@@ -29,6 +29,7 @@ namespace Wokarol.GameSystemsLocator
 
             // Holder is removed so tht the Awake methods can run
             systemsObject.transform.SetParent(null);
+            UnityEngine.Object.Destroy(temporaryHolder);
             UnityEngine.Object.DontDestroyOnLoad(systemsObject);
         }
 
