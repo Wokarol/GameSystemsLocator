@@ -68,7 +68,7 @@ namespace Wokarol.GameSystemsLocator
         {
             public string PrefabPath = "";
 
-            public void AddSingleton<T>(T nullObject = null, bool required = false) where T : class
+            public void Add<T>(T nullObject = null, bool required = false) where T : class
             {
                 if (systems.TryGetValue(typeof(T), out var _))
                     throw new InvalidOperationException("The singleton type can only be registered once");

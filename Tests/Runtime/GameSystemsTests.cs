@@ -35,7 +35,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<Foo>();
+                s.Add<Foo>();
             });
             var foundFoo = GameSystems.Get<Foo>();
 
@@ -51,7 +51,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<Foo>();
+                s.Add<Foo>();
             });
             var foundFoo = GameSystems.Get<Foo>();
 
@@ -67,7 +67,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<IBax>();
+                s.Add<IBax>();
             });
             var foundBax = GameSystems.Get<IBax>();
 
@@ -84,7 +84,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<IBax>(nullObject: nullBax);
+                s.Add<IBax>(nullObject: nullBax);
             });
             var foundBax = GameSystems.Get<IBax>();
 
@@ -102,7 +102,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<IBax>(nullObject: nullBax);
+                s.Add<IBax>(nullObject: nullBax);
             });
             var foundBax = GameSystems.Get<IBax>();
 
@@ -118,8 +118,8 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<Foo>();
-                s.AddSingleton<Bar>();
+                s.Add<Foo>();
+                s.Add<Bar>();
             });
             var foundFoo = GameSystems.Get<Bar>();
 
@@ -134,8 +134,8 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             TestDelegate action = () => GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<Foo>();
-                s.AddSingleton<Foo>();
+                s.Add<Foo>();
+                s.Add<Foo>();
             });
 
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
@@ -176,7 +176,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             GameSystems.Initialize(systemsObject, s =>
             {
-                s.AddSingleton<Foo>(required: true);
+                s.Add<Foo>(required: true);
             });
 
             Assert.That(logger.Errors, Has.Count.EqualTo(1));
