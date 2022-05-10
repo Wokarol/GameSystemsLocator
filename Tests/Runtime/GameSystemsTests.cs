@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -9,11 +10,28 @@ namespace Wokarol.GameSystemsLocator.Tests
 {
     public class GameSystemsTests
     {
+        readonly TestLogHandler logger = new();
+        private ILogHandler previousLogHandler;
 
         [SetUp]
         public void Setup()
         {
             GameSystems.Clear();
+            logger.Clear();
+        }
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            var unityLogger = Debug.unityLogger;
+            previousLogHandler = unityLogger.logHandler;
+            unityLogger.logHandler = logger;
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTeardown()
+        {
+            Debug.unityLogger.logHandler = previousLogHandler;
         }
 
         [UnityTest]
@@ -145,6 +163,21 @@ namespace Wokarol.GameSystemsLocator.Tests
             });
 
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Invalid_RequiredSingletons_HaveToBePresent()
+        {
+            var systemsObject = new GameObject("Systems");
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.AddSingleton<Foo>(required: true);
+            });
+
+            Assert.That(logger.Errors, Has.Count.EqualTo(1));
+            Assert.That(logger.Errors[0], Does.Match(".* binding.* required.*"));
             yield break;
         }
 

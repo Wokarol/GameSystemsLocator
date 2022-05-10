@@ -23,10 +23,24 @@ namespace Wokarol.GameSystemsLocator
                 throw new InvalidOperationException("The type was not registered as the game system");
 
             var instance = (T)boundSystem.Instance;
+            var nullInstance = (T)boundSystem.NullInstance;
+
             if (instance != null)
+            {
                 return instance;
+            }
+            else if (nullInstance != null)
+            {
+                return nullInstance;
+            }
             else
-                return (T)boundSystem.NullInstance;
+            {
+                if (boundSystem.Required)
+                {
+                    Debug.LogWarning($"Tried to get a required system {typeof(T)} but found null");
+                }
+                return null;
+            }
         }
 
         public static void Initialize(GameObject systemsObject)
@@ -35,6 +49,11 @@ namespace Wokarol.GameSystemsLocator
             {
                 var s = systemsObject.GetComponentInChildren(system.Type, true);
                 system.Binding.Instance = s;
+
+                if (system.Binding.Required && s == null)
+                {
+                    Debug.LogError($"The binding for {system.Type.FullName} is required");
+                }
             }
         }
 
@@ -48,14 +67,15 @@ namespace Wokarol.GameSystemsLocator
         {
             public string PrefabPath = "";
 
-            public void AddSingleton<T>(T nullObject = null) where T : class
+            public void AddSingleton<T>(T nullObject = null, bool required = false) where T : class
             {
                 if (systems.TryGetValue(typeof(T), out var _))
                     throw new InvalidOperationException("The singleton type can only be registered once");
 
                 var boundSystem = new SystemBinding()
                 {
-                    NullInstance = nullObject
+                    NullInstance = nullObject,
+                    Required = required,
                 };
                 systems.Add(typeof(T), boundSystem);
             }
@@ -66,5 +86,6 @@ namespace Wokarol.GameSystemsLocator
     {
         public object Instance { get; internal set; }
         public object NullInstance { get; internal set; }
+        public bool Required { get; internal set; }
     }
 }
