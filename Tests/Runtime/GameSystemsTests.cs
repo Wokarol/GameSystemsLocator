@@ -8,32 +8,8 @@ using UnityEngine.TestTools;
 
 namespace Wokarol.GameSystemsLocator.Tests
 {
-    public class GameSystemsTests
+    public class GameSystemsTests : GameSystemsTestsBase
     {
-        readonly TestLogHandler logger = new();
-        private ILogHandler previousLogHandler;
-
-        [SetUp]
-        public void Setup()
-        {
-            GameSystems.Clear();
-            logger.Clear();
-        }
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            var unityLogger = Debug.unityLogger;
-            previousLogHandler = unityLogger.logHandler;
-            unityLogger.logHandler = logger;
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTeardown()
-        {
-            Debug.unityLogger.logHandler = previousLogHandler;
-        }
-
         [UnityTest]
         public IEnumerator Cleared_ContainsNoBindings()
         {
@@ -165,6 +141,33 @@ namespace Wokarol.GameSystemsLocator.Tests
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
             yield break;
         }
+    }
+
+    public class GameSystemsTestLogging : GameSystemsTestsBase
+    {
+        readonly TestLogHandler logger = new();
+        private ILogHandler previousLogHandler;
+
+        [SetUp]
+        public void SetupLogger()
+        {
+            logger.Clear();
+        }
+
+        [OneTimeSetUp]
+        public void OneTimeSetupLogger()
+        {
+            var unityLogger = Debug.unityLogger;
+            previousLogHandler = unityLogger.logHandler;
+            unityLogger.logHandler = logger;
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTeardownLogger()
+        {
+            Debug.unityLogger.logHandler = previousLogHandler;
+        }
+
 
         [UnityTest]
         public IEnumerator Invalid_RequiredSingletons_HaveToBePresent()
@@ -180,19 +183,27 @@ namespace Wokarol.GameSystemsLocator.Tests
             Assert.That(logger.Errors[0], Does.Match(".* binding.* required.*"));
             yield break;
         }
+    }
 
-        private static T AddTestSystem<T>(GameObject systemsObject) where T : Component
+
+    internal interface IBax { }
+    internal class Bar : MonoBehaviour, IBax { }
+    internal class NullBax : IBax { }
+    internal class Foo : MonoBehaviour { }
+
+    public class GameSystemsTestsBase
+    {
+        [SetUp]
+        public void Setup()
+        {
+            GameSystems.Clear();
+        }
+
+        protected static T AddTestSystem<T>(GameObject systemsObject) where T : Component
         {
             var foo = new GameObject("Foo").AddComponent<T>();
             foo.transform.SetParent(systemsObject.transform);
             return foo;
         }
     }
-
-    internal interface IBax { }
-
-    internal class Bar : MonoBehaviour, IBax { }
-    internal class NullBax : IBax { }
-
-    internal class Foo : MonoBehaviour { }
 }

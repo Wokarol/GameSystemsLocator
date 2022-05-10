@@ -52,6 +52,7 @@ namespace Wokarol.GameSystemsLocator
 
                 if (system.Binding.Required && s == null)
                 {
+                    // Consider using exceptions
                     Debug.LogError($"The binding for {system.Type.FullName} is required");
                 }
             }
