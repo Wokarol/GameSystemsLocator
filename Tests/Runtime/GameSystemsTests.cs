@@ -66,6 +66,57 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
+        public IEnumerator Initialized_LocatesBoundSingleton_AsInterface()
+        {
+            var systemsObject = new GameObject("Systems");
+            var bar = AddTestSystem<Bar>(systemsObject);
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.AddSingleton<IBax>();
+            });
+            var foundBax = GameSystems.Get<IBax>();
+
+            Assert.That(foundBax, Is.EqualTo(bar));
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_ReturnsNullObject_WhenDefined()
+        {
+            var systemsObject = new GameObject("Systems");
+
+            var nullBax = new NullBax();
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.AddSingleton<IBax>(nullObject: nullBax);
+            });
+            var foundBax = GameSystems.Get<IBax>();
+
+            Assert.That(foundBax, Is.EqualTo(nullBax));
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_ReturnsInstance_EvenIf_NullObjectWhenDefined()
+        {
+            var systemsObject = new GameObject("Systems");
+            var bar = AddTestSystem<Bar>(systemsObject);
+
+            var nullBax = new NullBax();
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.AddSingleton<IBax>(nullObject: nullBax);
+            });
+            var foundBax = GameSystems.Get<IBax>();
+
+            Assert.That(foundBax, Is.EqualTo(bar));
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator Initialized_LocatesOnlyCreatedSingletons()
         {
             var systemsObject = new GameObject("Systems");
@@ -105,7 +156,10 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
     }
 
-    internal class Bar : MonoBehaviour { }
+    internal interface IBax { }
+
+    internal class Bar : MonoBehaviour, IBax { }
+    internal class NullBax : IBax { }
 
     internal class Foo : MonoBehaviour { }
 }

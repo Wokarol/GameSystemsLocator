@@ -17,12 +17,16 @@ namespace Wokarol.GameSystemsLocator
             systems.Clear();
         }
 
-        public static T Get<T>() where T : Component
+        public static T Get<T>() where T : class
         {
             if (!systems.TryGetValue(typeof(T), out var boundSystem))
                 throw new InvalidOperationException("The type was not registered as the game system");
 
-            return (T)boundSystem.Instance;
+            var instance = (T)boundSystem.Instance;
+            if (instance != null)
+                return instance;
+            else
+                return (T)boundSystem.NullInstance;
         }
 
         public static void Initialize(GameObject systemsObject)
@@ -44,14 +48,14 @@ namespace Wokarol.GameSystemsLocator
         {
             public string PrefabPath = "";
 
-            public void AddSingleton<T>() where T : Component
+            public void AddSingleton<T>(T nullObject = null) where T : class
             {
                 if (systems.TryGetValue(typeof(T), out var _))
                     throw new InvalidOperationException("The singleton type can only be registered once");
 
                 var boundSystem = new SystemBinding()
                 {
-
+                    NullInstance = nullObject
                 };
                 systems.Add(typeof(T), boundSystem);
             }
@@ -60,6 +64,7 @@ namespace Wokarol.GameSystemsLocator
 
     public class SystemBinding
     {
-        public Component Instance { get; internal set; }
+        public object Instance { get; internal set; }
+        public object NullInstance { get; internal set; }
     }
 }
