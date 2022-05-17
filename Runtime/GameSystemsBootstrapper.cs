@@ -25,12 +25,18 @@ namespace Wokarol.GameSystemsLocator
             var temporaryHolder = new GameObject();
             temporaryHolder.SetActive(false);
 
-            var systemsObject = SetupGameSystems(temporaryHolder);
+            try
+            {
+                var systemsObject = SetupGameSystems(temporaryHolder);
 
-            // Holder is removed so tht the Awake methods can run
-            systemsObject.transform.SetParent(null);
-            UnityEngine.Object.Destroy(temporaryHolder);
-            UnityEngine.Object.DontDestroyOnLoad(systemsObject);
+                // Holder is removed so the the Awake methods can run
+                systemsObject.transform.SetParent(null);
+                UnityEngine.Object.DontDestroyOnLoad(systemsObject);
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(temporaryHolder);
+            }
         }
 
         private static GameObject SetupGameSystems(GameObject temporaryHolder)
