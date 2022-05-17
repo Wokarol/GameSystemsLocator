@@ -63,6 +63,7 @@ namespace Wokarol.GameSystemsLocator
         {
             var prefab = Resources.Load<GameObject>(builder.PrefabPath);
             var systemsObject = UnityEngine.Object.Instantiate(prefab, temporaryHolder.transform);
+            systemsObject.name = prefab.name;
             return systemsObject;
         }
 
