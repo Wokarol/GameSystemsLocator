@@ -7,8 +7,8 @@ namespace Wokarol.GameSystemsLocator
 {
     public partial class GameSystemsBootstrapper
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
-        public static void JustBeforeSplash()
+        [RuntimeInitializeOnLoadMethod]
+        public static void AfterSceneLoaded()
         {
             var scene = SceneManager.GetActiveScene();
 
