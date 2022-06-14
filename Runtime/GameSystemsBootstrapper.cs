@@ -41,10 +41,11 @@ namespace Wokarol.GameSystemsLocator
 
         private static GameObject SetupGameSystems(GameObject temporaryHolder)
         {
+            GameSystems.Clear();
+
             var builder = ConfigureGameSystems();
             var systemsObject = CreateSystems(temporaryHolder, builder);
 
-            GameSystems.Clear();
             GameSystems.Initialize(systemsObject);
 
             return systemsObject;

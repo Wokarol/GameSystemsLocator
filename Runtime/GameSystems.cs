@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
+[assembly: InternalsVisibleTo("Wokarol.GameSystemsLocator.Tests")]
 namespace Wokarol.GameSystemsLocator
 {
     public class GameSystems
@@ -11,11 +13,6 @@ namespace Wokarol.GameSystemsLocator
         private static readonly Dictionary<Type, SystemBinding> systems = new();
 
         public static IEnumerable<(Type Type, SystemBinding Binding)> Systems => systems.Select(kv => (kv.Key, kv.Value));
-
-        public static void Clear()
-        {
-            systems.Clear();
-        }
 
         public static T Get<T>() where T : class
         {
@@ -43,12 +40,17 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
-        public static void Initialize(GameObject systemsObject)
+        internal static void Clear()
+        {
+            systems.Clear();
+        }
+
+        internal static void Initialize(GameObject systemsObject)
         {
             foreach (var system in Systems)
             {
                 var s = systemsObject.GetComponentInChildren(system.Type, true);
-                system.Binding.Instance = s;
+                system.Binding.InstancesInternal.Add(s);
 
                 if (system.Binding.Required && s == null)
                 {
@@ -58,10 +60,32 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
-        public static void Initialize(GameObject systemsObject, Action<ConfigurationBuilder> configCallback)
+        internal static void Initialize(GameObject systemsObject, Action<ConfigurationBuilder> configCallback)
         {
             configCallback(new ConfigurationBuilder());
             Initialize(systemsObject);
+        }
+
+        internal static void ApplyOverride(GameObject holder)
+        {
+            foreach (var system in Systems)
+            {
+                var s = holder.GetComponentInChildren(system.Type);
+                if (s == null) continue;
+
+                system.Binding.InstancesInternal.Add(s);
+            }
+        }
+
+        internal static void RemoveOverride(GameObject holder)
+        {
+            foreach (var system in Systems)
+            {
+                var s = holder.GetComponentInChildren(system.Type);
+                if (s == null) continue;
+
+                system.Binding.InstancesInternal.Remove(s);
+            }
         }
 
         public class ConfigurationBuilder
@@ -85,7 +109,10 @@ namespace Wokarol.GameSystemsLocator
 
     public class SystemBinding
     {
-        public object Instance { get; internal set; }
+        internal readonly List<object> InstancesInternal = new List<object>();
+
+        public IReadOnlyList<object> Instances => InstancesInternal;
+        public object Instance => InstancesInternal[InstancesInternal.Count - 1];
         public object NullInstance { get; internal set; }
         public bool Required { get; internal set; }
     }

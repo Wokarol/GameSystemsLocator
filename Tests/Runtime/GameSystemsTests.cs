@@ -185,9 +185,166 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
     }
 
+    public class GameSystemsTestOverrides : GameSystemsTestsBase
+    {
+        private Bar baseBar;
+
+        [SetUp]
+        public void SetupBaseSystems()
+        {
+            var systemsObject = new GameObject("Systems");
+            baseBar = AddTestSystem<Bar>(systemsObject);
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.Add<IBax>();
+            });
+        }
+
+        [Test]
+        public void NotOverriten_ReturnsBase()
+        {
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+
+        [Test]
+        public void Overriten_ReturnsOverride()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            GameSystems.ApplyOverride(holder);
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar));
+        }
+
+        [Test]
+        public void OverritenTwice_ReturnsLastOverride()
+        {
+            var holder1 = new GameObject("Better Systems 1");
+            var holder2 = new GameObject("Better Systems 2");
+            var betterBar1 = AddTestSystem<BetterBar>(holder1);
+            var betterBar2 = AddTestSystem<BetterBar>(holder2);
+
+            GameSystems.ApplyOverride(holder1);
+            GameSystems.ApplyOverride(holder2);
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar2));
+        }
+
+        [Test]
+        public void Overriten_AndRemoved_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            GameSystems.ApplyOverride(holder);
+            GameSystems.RemoveOverride(holder);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_AndRemoved_Repeated_ReturnsOverride()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            GameSystems.ApplyOverride(holder);
+            GameSystems.RemoveOverride(holder);
+            GameSystems.ApplyOverride(holder);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar));
+        }
+
+        [Test]
+        public void OverritenTwice_AndRemoved_ReturnsBase()
+        {
+            var holder1 = new GameObject("Better Systems 1");
+            var holder2 = new GameObject("Better Systems 2");
+            var betterBar1 = AddTestSystem<BetterBar>(holder1);
+            var betterBar2 = AddTestSystem<BetterBar>(holder2);
+
+            GameSystems.ApplyOverride(holder1);
+            GameSystems.ApplyOverride(holder2);
+
+            GameSystems.RemoveOverride(holder2);
+            GameSystems.RemoveOverride(holder1);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void OverritenTwice_AndRemoved_OutOfOrder_ReturnsBase()
+        {
+            var holder1 = new GameObject("Better Systems 1");
+            var holder2 = new GameObject("Better Systems 2");
+            var betterBar1 = AddTestSystem<BetterBar>(holder1);
+            var betterBar2 = AddTestSystem<BetterBar>(holder2);
+
+            GameSystems.ApplyOverride(holder1);
+            GameSystems.ApplyOverride(holder2);
+
+            GameSystems.RemoveOverride(holder1);
+            GameSystems.RemoveOverride(holder2);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void OverritenTwice_AndRemoved_Middle_ReturnsLates()
+        {
+            var holder1 = new GameObject("Better Systems 1");
+            var holder2 = new GameObject("Better Systems 2");
+            var betterBar1 = AddTestSystem<BetterBar>(holder1);
+            var betterBar2 = AddTestSystem<BetterBar>(holder2);
+
+            GameSystems.ApplyOverride(holder1);
+            GameSystems.ApplyOverride(holder2);
+
+            GameSystems.RemoveOverride(holder1);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar2));
+        }
+
+        [Test]
+        public void OverritenTwice_AndRemoved_Second_ReturnsFirst()
+        {
+            var holder1 = new GameObject("Better Systems 1");
+            var holder2 = new GameObject("Better Systems 2");
+            var betterBar1 = AddTestSystem<BetterBar>(holder1);
+            var betterBar2 = AddTestSystem<BetterBar>(holder2);
+
+            GameSystems.ApplyOverride(holder1);
+            GameSystems.ApplyOverride(holder2);
+
+            GameSystems.RemoveOverride(holder2);
+
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar1));
+        }
+    }
+
 
     internal interface IBax { }
     internal class Bar : MonoBehaviour, IBax { }
+    internal class BetterBar : MonoBehaviour, IBax { }
     internal class NullBax : IBax { }
     internal class Foo : MonoBehaviour { }
 
