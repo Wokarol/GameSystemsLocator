@@ -4,7 +4,7 @@ namespace Wokarol.GameSystemsLocator
 {
     public class SystemOverrider : MonoBehaviour
     {
-        public void OnEnable()
+        private void OnEnable()
         {
             GameSystems.ApplyOverride(gameObject);
         }

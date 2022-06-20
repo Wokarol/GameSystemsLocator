@@ -5,10 +5,13 @@ using UnityEngine.SceneManagement;
 
 namespace Wokarol.GameSystemsLocator
 {
+    /// <summary>
+    /// Should not be used in code, provides functionality for starting the Game Systems Locator on game start
+    /// </summary>
     public partial class GameSystemsBootstrapper
     {
         [RuntimeInitializeOnLoadMethod]
-        public static void AfterSceneLoaded()
+        private static void AfterSceneLoaded()
         {
             var scene = SceneManager.GetActiveScene();
 
@@ -19,7 +22,7 @@ namespace Wokarol.GameSystemsLocator
             Initialize();
         }
 
-        public static void Initialize()
+        private static void Initialize()
         {
             // Holder is created to prevent Awake from running when the systems are spawned
             var temporaryHolder = new GameObject();
@@ -87,8 +90,15 @@ namespace Wokarol.GameSystemsLocator
         }
     }
 
+    /// <summary>
+    /// Mark a class that will be instanced and used for configuring the Game Systems Locator
+    /// </summary>
     public interface ISystemConfiguration
     {
+        /// <summary>
+        /// Run as the Game Systems Locator is bootrstrapped and should define types locator should expect 
+        /// </summary>
+        /// <param name="builder">The builder providing method needed to configure the locator</param>
         void Configure(GameSystems.ConfigurationBuilder builder);
     }
 }

@@ -8,12 +8,24 @@ using UnityEngine;
 [assembly: InternalsVisibleTo("Wokarol.GameSystemsLocator.Tests")]
 namespace Wokarol.GameSystemsLocator
 {
-    public class GameSystems
+    /// <summary>
+    /// Allows for fetching and managing systems present in the game
+    /// </summary>
+    public static class GameSystems
     {
         private static readonly Dictionary<Type, SystemBinding> systems = new();
 
+        /// <summary>
+        /// List of all systems in form of (Type, Binding) tuple. Gets all registered systems in the locator
+        /// </summary>
         public static IEnumerable<(Type Type, SystemBinding Binding)> Systems => systems.Select(kv => (kv.Key, kv.Value));
 
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <typeparam name="T">Type of the system to locate</typeparam>
+        /// <returns>The system that was located or null if no instance is found</returns>
+        /// <exception cref="InvalidOperationException">Thrown if given type T is not registered in the locator</exception>
         public static T Get<T>() where T : class
         {
             if (!systems.TryGetValue(typeof(T), out var boundSystem))
@@ -88,14 +100,27 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
+        /// <summary>
+        /// Builder allowing for configuring the locator and the systems it should look for
+        /// </summary>
         public class ConfigurationBuilder
         {
+            /// <summary>
+            /// Path to the prefab that should be spawned, relative to Resource folder without file suffix
+            /// </summary>
             public string PrefabPath = "";
 
+            /// <summary>
+            /// Adds the type to the locator
+            /// </summary>
+            /// <typeparam name="T">Type to add to the locator</typeparam>
+            /// <param name="nullObject">Optional null object that is used in case no instance is located</param>
+            /// <param name="required">Is the system required, if so, additional error will get logged in case an instance is not present</param>
+            /// <exception cref="InvalidOperationException">Thrown then the type is registered more than once</exception>
             public void Add<T>(T nullObject = null, bool required = false) where T : class
             {
                 if (systems.TryGetValue(typeof(T), out var _))
-                    throw new InvalidOperationException("The singleton type can only be registered once");
+                    throw new InvalidOperationException("The system type can only be registered once");
 
                 var boundSystem = new SystemBinding()
                 {
@@ -107,13 +132,33 @@ namespace Wokarol.GameSystemsLocator
         }
     }
 
+    /// <summary>
+    /// Describes the system and it's properties
+    /// Note: The binding is not aware of type so the system instance should be obtained via the GameSystem class
+    /// </summary>
     public class SystemBinding
     {
         internal readonly List<object> InstancesInternal = new List<object>();
 
+        /// <summary>
+        /// All instances registered for the system currently
+        /// </summary>
         public IReadOnlyList<object> Instances => InstancesInternal;
+
+        /// <summary>
+        /// Current instance registered for the system
+        /// Note: This is the last instance from Instances list, aka the newest one
+        /// </summary>
         public object Instance => InstancesInternal[InstancesInternal.Count - 1];
+
+        /// <summary>
+        /// Object that should be returned in case the Instances list has no elements <see cref="GameSystems.ConfigurationBuilder.Add{T}(T, bool)"/>
+        /// </summary>
         public object NullInstance { get; internal set; }
+
+        /// <summary>
+        /// Is the system required? <see cref="GameSystems.ConfigurationBuilder.Add{T}(T, bool)"/>
+        /// </summary>
         public bool Required { get; internal set; }
     }
 }
