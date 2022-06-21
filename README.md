@@ -59,6 +59,10 @@ Locator configured like so can then be used to obtain references to game system 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
 ## Changelog
+### v0.4.0
+- **Add:** Readme content
+- **Add:** Code documentation
+
 ### v0.3.0
 - **Add:** System overrider
 
