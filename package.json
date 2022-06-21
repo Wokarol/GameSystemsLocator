@@ -4,6 +4,7 @@
     "displayName": "Game System Locator",
     "description": "This package provides service locator and a bootstrapper for game systems",
     "documentationUrl": "https://github.com/Wokarol/GameSystemsLocator",
+    "changelogUrl": "https://github.com/Wokarol/GameSystemsLocator",
     "author": {
         "name": "Wokarol"
     }
