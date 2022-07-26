@@ -51,7 +51,7 @@ Game Systems can be overwritten, for that attach ` SystemOverrider ` component t
 
 No additional configuration is needed
 
-> Currently enabling an overrider loops over all systems which might cause a performance hit but I did not yet tested it well enough to confirm that or deny
+> Currently enabling an overrider loops over all systems which might cause a performance hit but I did not yet test it well enough to confirm nor deny that
 
 ### Locating
 Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
