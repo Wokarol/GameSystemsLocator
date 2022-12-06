@@ -21,6 +21,13 @@ namespace Wokarol.GameSystemsLocator
         public static IEnumerable<(Type Type, SystemBinding Binding)> Systems => systems.Select(kv => (kv.Key, kv.Value));
 
         /// <summary>
+        /// Is there any system registered for the game systems?
+        /// </summary>
+        public static bool IsGameSystemInitialized { get; private set; } = false;
+
+        private static Queue<QueuedSystemOverride> systemOverridesQueue = new();
+
+        /// <summary>
         /// Locates Game System matching the type
         /// </summary>
         /// <typeparam name="T">Type of the system to locate</typeparam>
@@ -55,6 +62,7 @@ namespace Wokarol.GameSystemsLocator
         internal static void Clear()
         {
             systems.Clear();
+            IsGameSystemInitialized = false;
         }
 
         internal static void Initialize(GameObject systemsObject)
@@ -70,6 +78,14 @@ namespace Wokarol.GameSystemsLocator
                     Debug.LogError($"The binding for {system.Type.FullName} is required");
                 }
             }
+
+            IsGameSystemInitialized = true;
+
+            while (systemOverridesQueue.Count != 0)
+            {
+                var systemOverride = systemOverridesQueue.Dequeue();
+                ApplyOverride(systemOverride.Holder, systemOverride.Overrides);
+            }
         }
 
         internal static void Initialize(GameObject systemsObject, Action<ConfigurationBuilder> configCallback)
@@ -78,25 +94,76 @@ namespace Wokarol.GameSystemsLocator
             Initialize(systemsObject);
         }
 
-        internal static void ApplyOverride(GameObject holder)
+        internal static void TryApplyOverride(GameObject holder, List<GameObject> overrides = null)
         {
-            foreach (var system in Systems)
+            if (IsGameSystemInitialized)
             {
-                var s = holder.GetComponentInChildren(system.Type);
-                if (s == null) continue;
-
-                system.Binding.InstancesInternal.Add(s);
+                ApplyOverride(holder, overrides);
+            }
+            else
+            {
+                systemOverridesQueue.Enqueue(new(holder, overrides));
             }
         }
 
-        internal static void RemoveOverride(GameObject holder)
+        internal static void ApplyOverride(GameObject holder, List<GameObject> overrides = null)
         {
-            foreach (var system in Systems)
+            if (!IsGameSystemInitialized)
             {
-                var s = holder.GetComponentInChildren(system.Type);
-                if (s == null) continue;
+                throw new InvalidOperationException("Applied override before the game systems config was initialized");
+            }
 
-                system.Binding.InstancesInternal.Remove(s);
+            if (holder != null)
+            {
+                foreach (var system in Systems)
+                {
+                    var s = holder.GetComponentInChildren(system.Type);
+                    if (s == null) continue;
+
+                    system.Binding.InstancesInternal.Add(s);
+                }
+            }
+
+            if (overrides != null)
+            {
+                foreach (var system in Systems)
+                {
+                    foreach (var obj in overrides)
+                    {
+                        if (obj.TryGetComponent(system.Type, out var s))
+                        {
+                            system.Binding.InstancesInternal.Add(s);
+                        }
+                    }
+                }
+            }
+        }
+
+        internal static void RemoveOverride(GameObject holder, List<GameObject> overrides = null)
+        {
+            if (holder != null)
+            {
+                foreach (var system in Systems)
+                {
+                    var s = holder.GetComponentInChildren(system.Type);
+                    if (s == null) continue;
+
+                    system.Binding.InstancesInternal.Remove(s);
+                }
+            }
+
+            if (overrides != null)
+            {
+                foreach (var system in Systems)
+                {
+                    foreach (var obj in overrides)
+                    {
+                        if (obj.TryGetComponent(system.Type, out var s))
+                        {
+                            system.Binding.InstancesInternal.Add(s);
+                        }
+                    }
+                }
             }
         }
 
@@ -128,6 +195,18 @@ namespace Wokarol.GameSystemsLocator
                     Required = required,
                 };
                 systems.Add(typeof(T), boundSystem);
+            }
+        }
+
+        private struct QueuedSystemOverride
+        {
+            public GameObject Holder;
+            public List<GameObject> Overrides;
+
+            public QueuedSystemOverride(GameObject holder, List<GameObject> overrides)
+            {
+                Holder = holder;
+                Overrides = overrides;
             }
         }
     }
