@@ -5,7 +5,7 @@ namespace Wokarol.GameSystemsLocator
 {
     public class SystemOverrider : MonoBehaviour
     {
-        [SerializeField] private bool grabSystemsFromChildren;
+        [SerializeField] private bool grabSystemsFromChildren = true;
         [SerializeField] private List<GameObject> systems;
 
         private void OnValidate()
