@@ -60,6 +60,8 @@ Locator configured like so can then be used to obtain references to game system 
 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
+> Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed
+
 ## Changelog
 ### v0.5.0
 - **Add:** Systems list in System Overrider
