@@ -10,6 +10,13 @@ namespace Wokarol.GameSystemsLocator
     /// </summary>
     public partial class GameSystemsBootstrapper
     {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+        private static void BeforeSplashScreen()
+        {
+            GameSystems.Clear();
+        }
+
+
         [RuntimeInitializeOnLoadMethod]
         private static void AfterSceneLoaded()
         {

@@ -51,7 +51,9 @@ Game Systems can be overwritten, for that attach ` SystemOverrider ` component t
 
 No additional configuration is needed
 
-> Currently enabling an overrider loops over all systems which might cause a performance hit but I did not yet test it well enough to confirm nor deny that
+> You can also pass the systems in a list directly, this will call ` GetComponent ` on them to retrieve a system.
+
+> Currently enabling an overrider loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit but I did not yet test it well enough to confirm that or deny
 
 ### Locating
 Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
@@ -59,12 +61,16 @@ Locator configured like so can then be used to obtain references to game system 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
 ## Changelog
+### v0.5.0
+- **Add:** Systems list in System Overrider
+- **Fix:** Having System Overrider enabled while the playmode is entered does not register systems properly
+
 ### v0.4.0
 - **Add:** Readme content
 - **Add:** Code documentation
 
 ### v0.3.0
-- **Add:** System overrider
+- **Add:** System Overrider
 
 ### v0.2.1
 - **Fix:** Created system has "(Clone)" suffix
