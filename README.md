@@ -69,6 +69,14 @@ Locator configured like so can then be used to obtain references to game system 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
 ## Changelog
+### v0.6.0
+- **Add:** Option to disable bootstrapper
+- **Add:** Option to not spawn systems prefab
+- **Add:** SkipSystemsPrefab keyword
+- **Improve:** Game Systems API
+- **Fix:** Bootstrapper loads after the scene is loaded
+
+
 ### v0.5.0
 - **Add:** Systems list in System Overrider
 - **Fix:** Having System Overrider enabled while the playmode is entered does not register systems properly
