@@ -43,6 +43,9 @@ public class GameConfig : ISystemConfiguration
 
 If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Locator with the systems present on the prefab. Prefab is loaded before scene is loaded.
 
+> For test scenes, you can add ` SkipSystemsPrefab ` to the name to not load the systems prefab. Locator will still be configured.  
+> (when using additive scenes, all loaded scenes need that keyword otherwise systems prefab is spawned)
+
 ` .Add<T>(...) ` is used to add a game system container to the locator. Optionally it can define if the system is ` required ` or if it has a ` nullObject ` instance.
 
 > If the ` PrefabPath ` is not set, ` required ` has no effect

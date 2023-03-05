@@ -27,15 +27,32 @@ namespace Wokarol.GameSystemsLocator
             if (scene.name.StartsWith("InitTestScene"))
                 return;
 
-            Initialize();
+            bool shouldSkipPrefab = AllScenesWantToSkipPrefab();
+
+            Initialize(shouldSkipPrefab);
         }
 
-        private static void Initialize()
+        private static bool AllScenesWantToSkipPrefab()
+        {
+            const string skipPrefabKeyword = "SkipSystemsPrefab";
+
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                if (!SceneManager.GetSceneAt(i).name.Contains(skipPrefabKeyword))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void Initialize(bool shouldSkipPrefab)
         {
             GameSystems.Clear();
             var builder = ConfigureGameSystems();
 
-            if (builder.IsSystemPrefabSet)
+            if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
             {
                 // Holder is created to prevent Awake from running when the systems are spawned
                 var temporaryHolder = new GameObject();
