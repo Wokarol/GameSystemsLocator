@@ -73,6 +73,11 @@ namespace Wokarol.GameSystemsLocator
         private static GameObject CreateSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
         {
             var prefab = Resources.Load<GameObject>(builder.PrefabPath);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"There is no prefab in Resources at \"{builder.PrefabPath}\". Make sure the prefab name is typed correctly");
+            }
+
             var systemsObject = UnityEngine.Object.Instantiate(prefab, temporaryHolder.transform);
             systemsObject.name = prefab.name;
             return systemsObject;
