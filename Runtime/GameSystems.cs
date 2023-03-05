@@ -35,11 +35,22 @@ namespace Wokarol.GameSystemsLocator
         /// <exception cref="InvalidOperationException">Thrown if given type T is not registered in the locator</exception>
         public static T Get<T>() where T : class
         {
-            if (!systems.TryGetValue(typeof(T), out var boundSystem))
+            return (T)Get(typeof(T));
+        }
+
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <param name="type">Type of the system to locate</param>
+        /// <returns>The system that was located or null if no instance is found</returns>
+        /// <exception cref="InvalidOperationException">Thrown if given type T is not registered in the locator</exception>
+        public static object Get(Type type)
+        {
+            if (!systems.TryGetValue(type, out var boundSystem))
                 throw new InvalidOperationException("The type was not registered as the game system");
 
-            var instance = (T)boundSystem.Instance;
-            var nullInstance = (T)boundSystem.NullInstance;
+            var instance = boundSystem.Instance;
+            var nullInstance = boundSystem.NullInstance;
 
             if (instance != null)
             {
@@ -53,7 +64,7 @@ namespace Wokarol.GameSystemsLocator
             {
                 if (boundSystem.Required)
                 {
-                    Debug.LogWarning($"Tried to get a required system {typeof(T)} but found null");
+                    Debug.LogWarning($"Tried to get a required system {type} but found null");
                 }
                 return null;
             }
@@ -186,7 +197,19 @@ namespace Wokarol.GameSystemsLocator
             /// <exception cref="InvalidOperationException">Thrown then the type is registered more than once</exception>
             public void Add<T>(T nullObject = null, bool required = false) where T : class
             {
-                if (systems.TryGetValue(typeof(T), out var _))
+                Add(typeof(T), nullObject, required);
+            }
+
+            /// <summary>
+            /// Adds the type to the locator
+            /// </summary>
+            /// <param name="type">Type to add to the locator</typeparam>
+            /// <param name="nullObject">Optional null object that is used in case no instance is located</param>
+            /// <param name="required">Is the system required, if so, additional error will get logged in case an instance is not present</param>
+            /// <exception cref="InvalidOperationException">Thrown then the type is registered more than once</exception>
+            public void Add(Type type, object nullObject,  bool required = false)
+            {
+                if (systems.TryGetValue(type, out var _))
                     throw new InvalidOperationException("The system type can only be registered once");
 
                 var boundSystem = new SystemBinding()
@@ -194,7 +217,7 @@ namespace Wokarol.GameSystemsLocator
                     NullInstance = nullObject,
                     Required = required,
                 };
-                systems.Add(typeof(T), boundSystem);
+                systems.Add(type, boundSystem);
             }
         }
 

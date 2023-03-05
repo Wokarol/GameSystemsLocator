@@ -60,6 +60,22 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
+        public IEnumerator Initialized_LocatesBoundSingleton_NonGeneric()
+        {
+            var systemsObject = new GameObject("Systems");
+            var foo = AddTestSystem<Foo>(systemsObject);
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.Add<Foo>();
+            });
+            var foundFoo = GameSystems.Get<Foo>();
+
+            Assert.That(foundFoo, Is.EqualTo(foo));
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator Initialized_LocatesBoundSingleton_AsInterface()
         {
             var systemsObject = new GameObject("Systems");
@@ -69,7 +85,7 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 s.Add<IBax>();
             });
-            var foundBax = GameSystems.Get<IBax>();
+            var foundBax = GameSystems.Get(typeof(IBax));
 
             Assert.That(foundBax, Is.EqualTo(bar));
             yield break;
