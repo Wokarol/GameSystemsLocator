@@ -228,7 +228,14 @@ namespace Wokarol.GameSystemsLocator
         /// Current instance registered for the system
         /// Note: This is the last instance from Instances list, aka the newest one
         /// </summary>
-        public object Instance => InstancesInternal[InstancesInternal.Count - 1];
+        public object Instance
+        {
+            get
+            {
+                if (InstancesInternal.Count == 0) return null;
+                else return InstancesInternal[InstancesInternal.Count - 1];
+            }
+        }
 
         /// <summary>
         /// Object that should be returned in case the Instances list has no elements <see cref="GameSystems.ConfigurationBuilder.Add{T}(T, bool)"/>
