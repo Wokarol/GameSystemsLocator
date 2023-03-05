@@ -17,9 +17,12 @@ Then type ` https://github.com/Wokarol/GameSystemsLocator.git#main ` as the URL
 > *If you want to target a specific version, suffix the URL with ` #version `, for example ` https://github.com/Wokarol/GameSystemsLocator.git#v0.2.0 `*
 
 ## Usage
-### Configuration
-To start using the package you first have to **create a config class**.  
+### Bootstrapper
+First, you have to **create a config class**.  
 This class has to implement ` ISystemConfiguration ` interface and cannot be static.
+
+> If you want to disable the boostrapper, you can use ` GAME_SYSTEMS_DISABLE_BOOTSTRAPPER ` compiler directive.  
+> Keep in mind that you will have to initialize the locator yourself!
 
 This interface defines a single method, ` void Configure(GameSystems.ConfigurationBuilder builder) ` which uses the builder passed as an argument to configure the locator.
 

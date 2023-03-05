@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace Wokarol.GameSystemsLocator
 {
+#if !GAME_SYSTEMS_DISABLE_BOOTSTRAPPER
     /// <summary>
     /// Should not be used in code, provides functionality for starting the Game Systems Locator on game start
     /// </summary>
@@ -105,6 +106,7 @@ namespace Wokarol.GameSystemsLocator
             return configurator;
         }
     }
+#endif
 
     /// <summary>
     /// Mark a class that will be instanced and used for configuring the Game Systems Locator
