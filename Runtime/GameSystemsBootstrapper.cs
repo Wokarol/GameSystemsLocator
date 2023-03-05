@@ -17,7 +17,7 @@ namespace Wokarol.GameSystemsLocator
         }
 
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AfterSceneLoaded()
         {
             var scene = SceneManager.GetActiveScene();
