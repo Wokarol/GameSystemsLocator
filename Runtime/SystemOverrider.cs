@@ -19,7 +19,7 @@ namespace Wokarol.GameSystemsLocator
         private void OnEnable()
         {
             var holder = grabSystemsFromChildren ? gameObject : null;
-            GameSystems.TryApplyOverride(holder, systems);
+            GameSystems.ApplyOverride(holder, systems);
         }
 
         private void OnDisable()

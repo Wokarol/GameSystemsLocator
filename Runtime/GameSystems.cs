@@ -14,18 +14,16 @@ namespace Wokarol.GameSystemsLocator
     public static class GameSystems
     {
         private static readonly Dictionary<Type, SystemBinding> systems = new();
+        private static bool isSystemsObjectInitialized = false;
+        private static bool isSystemsPrefabSet = false;
+
+        public static bool IsReady => isSystemsObjectInitialized || !isSystemsPrefabSet;
 
         /// <summary>
         /// List of all systems in form of (Type, Binding) tuple. Gets all registered systems in the locator
         /// </summary>
         public static IEnumerable<(Type Type, SystemBinding Binding)> Systems => systems.Select(kv => (kv.Key, kv.Value));
 
-        /// <summary>
-        /// Is there any system registered for the game systems?
-        /// </summary>
-        public static bool IsGameSystemInitialized { get; private set; } = false;
-
-        private static Queue<QueuedSystemOverride> systemOverridesQueue = new();
 
         /// <summary>
         /// Locates Game System matching the type
@@ -73,10 +71,10 @@ namespace Wokarol.GameSystemsLocator
         internal static void Clear()
         {
             systems.Clear();
-            IsGameSystemInitialized = false;
+            isSystemsObjectInitialized = false;
         }
 
-        internal static void Initialize(GameObject systemsObject)
+        internal static void InitializeSystemsObject(GameObject systemsObject)
         {
             foreach (var system in Systems)
             {
@@ -90,38 +88,20 @@ namespace Wokarol.GameSystemsLocator
                 }
             }
 
-            IsGameSystemInitialized = true;
-
-            while (systemOverridesQueue.Count != 0)
-            {
-                var systemOverride = systemOverridesQueue.Dequeue();
-                ApplyOverride(systemOverride.Holder, systemOverride.Overrides);
-            }
+            isSystemsObjectInitialized = true;
         }
 
         internal static void Initialize(GameObject systemsObject, Action<ConfigurationBuilder> configCallback)
         {
             configCallback(new ConfigurationBuilder());
-            Initialize(systemsObject);
-        }
-
-        internal static void TryApplyOverride(GameObject holder, List<GameObject> overrides = null)
-        {
-            if (IsGameSystemInitialized)
-            {
-                ApplyOverride(holder, overrides);
-            }
-            else
-            {
-                systemOverridesQueue.Enqueue(new(holder, overrides));
-            }
+            InitializeSystemsObject(systemsObject);
         }
 
         internal static void ApplyOverride(GameObject holder, List<GameObject> overrides = null)
         {
-            if (!IsGameSystemInitialized)
+            if (!IsReady)
             {
-                throw new InvalidOperationException("Applied override before the game systems config was initialized");
+                throw new InvalidOperationException("Applied override before the game systems was ready, that should never happen");
             }
 
             if (holder != null)
@@ -186,7 +166,19 @@ namespace Wokarol.GameSystemsLocator
             /// <summary>
             /// Path to the prefab that should be spawned, relative to Resource folder without file suffix
             /// </summary>
-            public string PrefabPath = "";
+            private string prefabPath = "";
+
+            public string PrefabPath
+            {
+                get => prefabPath; 
+                set
+                {
+                    prefabPath = value;
+                    isSystemsPrefabSet = !string.IsNullOrEmpty(prefabPath);
+                }
+            }
+
+            public bool IsSystemPrefabSet => isSystemsPrefabSet;
 
             /// <summary>
             /// Adds the type to the locator
@@ -218,18 +210,6 @@ namespace Wokarol.GameSystemsLocator
                     Required = required,
                 };
                 systems.Add(type, boundSystem);
-            }
-        }
-
-        private struct QueuedSystemOverride
-        {
-            public GameObject Holder;
-            public List<GameObject> Overrides;
-
-            public QueuedSystemOverride(GameObject holder, List<GameObject> overrides)
-            {
-                Holder = holder;
-                Overrides = overrides;
             }
         }
     }
