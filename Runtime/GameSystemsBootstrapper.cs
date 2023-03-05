@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace Wokarol.GameSystemsLocator
 {
+#if !GAME_SYSTEMS_DISABLE_BOOTSTRAPPER
     /// <summary>
     /// Should not be used in code, provides functionality for starting the Game Systems Locator on game start
     /// </summary>
@@ -17,7 +18,7 @@ namespace Wokarol.GameSystemsLocator
         }
 
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void AfterSceneLoaded()
         {
             var scene = SceneManager.GetActiveScene();
@@ -26,37 +27,58 @@ namespace Wokarol.GameSystemsLocator
             if (scene.name.StartsWith("InitTestScene"))
                 return;
 
-            Initialize();
+            bool shouldSkipPrefab = AllScenesWantToSkipPrefab();
+
+            Initialize(shouldSkipPrefab);
         }
 
-        private static void Initialize()
+        private static bool AllScenesWantToSkipPrefab()
         {
-            // Holder is created to prevent Awake from running when the systems are spawned
-            var temporaryHolder = new GameObject();
-            temporaryHolder.SetActive(false);
+            const string skipPrefabKeyword = "SkipSystemsPrefab";
 
-            try
+            for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                var systemsObject = SetupGameSystems(temporaryHolder);
+                if (!SceneManager.GetSceneAt(i).name.Contains(skipPrefabKeyword))
+                {
+                    return false;
+                }
+            }
 
-                // Holder is removed so the the Awake methods can run
-                systemsObject.transform.SetParent(null);
-                UnityEngine.Object.DontDestroyOnLoad(systemsObject);
-            }
-            finally
-            {
-                UnityEngine.Object.Destroy(temporaryHolder);
-            }
+            return true;
         }
 
-        private static GameObject SetupGameSystems(GameObject temporaryHolder)
+        private static void Initialize(bool shouldSkipPrefab)
         {
             GameSystems.Clear();
-
             var builder = ConfigureGameSystems();
+
+            if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
+            {
+                // Holder is created to prevent Awake from running when the systems are spawned
+                var temporaryHolder = new GameObject();
+                temporaryHolder.SetActive(false);
+
+                try
+                {
+                    var systemsObject = SetupGameSystems(temporaryHolder, builder);
+
+                    // Holder is removed so the the Awake methods can run
+                    systemsObject.transform.SetParent(null);
+                    UnityEngine.Object.DontDestroyOnLoad(systemsObject);
+                }
+                finally
+                {
+                    UnityEngine.Object.Destroy(temporaryHolder);
+                }
+            }
+        }
+
+        private static GameObject SetupGameSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
+        {
+
             var systemsObject = CreateSystems(temporaryHolder, builder);
 
-            GameSystems.Initialize(systemsObject);
+            GameSystems.InitializeSystemsObject(systemsObject);
 
             return systemsObject;
         }
@@ -73,6 +95,11 @@ namespace Wokarol.GameSystemsLocator
         private static GameObject CreateSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
         {
             var prefab = Resources.Load<GameObject>(builder.PrefabPath);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"There is no prefab in Resources at \"{builder.PrefabPath}\". Make sure the prefab name is typed correctly");
+            }
+
             var systemsObject = UnityEngine.Object.Instantiate(prefab, temporaryHolder.transform);
             systemsObject.name = prefab.name;
             return systemsObject;
@@ -96,6 +123,7 @@ namespace Wokarol.GameSystemsLocator
             return configurator;
         }
     }
+#endif
 
     /// <summary>
     /// Mark a class that will be instanced and used for configuring the Game Systems Locator

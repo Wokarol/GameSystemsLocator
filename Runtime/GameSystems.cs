@@ -14,18 +14,16 @@ namespace Wokarol.GameSystemsLocator
     public static class GameSystems
     {
         private static readonly Dictionary<Type, SystemBinding> systems = new();
+        private static bool isSystemsObjectInitialized = false;
+        private static bool isSystemsPrefabSet = false;
+
+        public static bool IsReady => isSystemsObjectInitialized || !isSystemsPrefabSet;
 
         /// <summary>
         /// List of all systems in form of (Type, Binding) tuple. Gets all registered systems in the locator
         /// </summary>
         public static IEnumerable<(Type Type, SystemBinding Binding)> Systems => systems.Select(kv => (kv.Key, kv.Value));
 
-        /// <summary>
-        /// Is there any system registered for the game systems?
-        /// </summary>
-        public static bool IsGameSystemInitialized { get; private set; } = false;
-
-        private static Queue<QueuedSystemOverride> systemOverridesQueue = new();
 
         /// <summary>
         /// Locates Game System matching the type
@@ -35,11 +33,22 @@ namespace Wokarol.GameSystemsLocator
         /// <exception cref="InvalidOperationException">Thrown if given type T is not registered in the locator</exception>
         public static T Get<T>() where T : class
         {
-            if (!systems.TryGetValue(typeof(T), out var boundSystem))
+            return (T)Get(typeof(T));
+        }
+
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <param name="type">Type of the system to locate</param>
+        /// <returns>The system that was located or null if no instance is found</returns>
+        /// <exception cref="InvalidOperationException">Thrown if given type T is not registered in the locator</exception>
+        public static object Get(Type type)
+        {
+            if (!systems.TryGetValue(type, out var boundSystem))
                 throw new InvalidOperationException("The type was not registered as the game system");
 
-            var instance = (T)boundSystem.Instance;
-            var nullInstance = (T)boundSystem.NullInstance;
+            var instance = boundSystem.Instance;
+            var nullInstance = boundSystem.NullInstance;
 
             if (instance != null)
             {
@@ -53,7 +62,7 @@ namespace Wokarol.GameSystemsLocator
             {
                 if (boundSystem.Required)
                 {
-                    Debug.LogWarning($"Tried to get a required system {typeof(T)} but found null");
+                    Debug.LogWarning($"Tried to get a required system {type} but found null");
                 }
                 return null;
             }
@@ -62,10 +71,10 @@ namespace Wokarol.GameSystemsLocator
         internal static void Clear()
         {
             systems.Clear();
-            IsGameSystemInitialized = false;
+            isSystemsObjectInitialized = false;
         }
 
-        internal static void Initialize(GameObject systemsObject)
+        internal static void InitializeSystemsObject(GameObject systemsObject)
         {
             foreach (var system in Systems)
             {
@@ -79,38 +88,20 @@ namespace Wokarol.GameSystemsLocator
                 }
             }
 
-            IsGameSystemInitialized = true;
-
-            while (systemOverridesQueue.Count != 0)
-            {
-                var systemOverride = systemOverridesQueue.Dequeue();
-                ApplyOverride(systemOverride.Holder, systemOverride.Overrides);
-            }
+            isSystemsObjectInitialized = true;
         }
 
         internal static void Initialize(GameObject systemsObject, Action<ConfigurationBuilder> configCallback)
         {
             configCallback(new ConfigurationBuilder());
-            Initialize(systemsObject);
-        }
-
-        internal static void TryApplyOverride(GameObject holder, List<GameObject> overrides = null)
-        {
-            if (IsGameSystemInitialized)
-            {
-                ApplyOverride(holder, overrides);
-            }
-            else
-            {
-                systemOverridesQueue.Enqueue(new(holder, overrides));
-            }
+            InitializeSystemsObject(systemsObject);
         }
 
         internal static void ApplyOverride(GameObject holder, List<GameObject> overrides = null)
         {
-            if (!IsGameSystemInitialized)
+            if (!IsReady)
             {
-                throw new InvalidOperationException("Applied override before the game systems config was initialized");
+                throw new InvalidOperationException("Applied override before the game systems was ready, that should never happen");
             }
 
             if (holder != null)
@@ -175,7 +166,19 @@ namespace Wokarol.GameSystemsLocator
             /// <summary>
             /// Path to the prefab that should be spawned, relative to Resource folder without file suffix
             /// </summary>
-            public string PrefabPath = "";
+            private string prefabPath = "";
+
+            public string PrefabPath
+            {
+                get => prefabPath; 
+                set
+                {
+                    prefabPath = value;
+                    isSystemsPrefabSet = !string.IsNullOrEmpty(prefabPath);
+                }
+            }
+
+            public bool IsSystemPrefabSet => isSystemsPrefabSet;
 
             /// <summary>
             /// Adds the type to the locator
@@ -186,7 +189,19 @@ namespace Wokarol.GameSystemsLocator
             /// <exception cref="InvalidOperationException">Thrown then the type is registered more than once</exception>
             public void Add<T>(T nullObject = null, bool required = false) where T : class
             {
-                if (systems.TryGetValue(typeof(T), out var _))
+                Add(typeof(T), nullObject, required);
+            }
+
+            /// <summary>
+            /// Adds the type to the locator
+            /// </summary>
+            /// <param name="type">Type to add to the locator</typeparam>
+            /// <param name="nullObject">Optional null object that is used in case no instance is located</param>
+            /// <param name="required">Is the system required, if so, additional error will get logged in case an instance is not present</param>
+            /// <exception cref="InvalidOperationException">Thrown then the type is registered more than once</exception>
+            public void Add(Type type, object nullObject,  bool required = false)
+            {
+                if (systems.TryGetValue(type, out var _))
                     throw new InvalidOperationException("The system type can only be registered once");
 
                 var boundSystem = new SystemBinding()
@@ -194,19 +209,7 @@ namespace Wokarol.GameSystemsLocator
                     NullInstance = nullObject,
                     Required = required,
                 };
-                systems.Add(typeof(T), boundSystem);
-            }
-        }
-
-        private struct QueuedSystemOverride
-        {
-            public GameObject Holder;
-            public List<GameObject> Overrides;
-
-            public QueuedSystemOverride(GameObject holder, List<GameObject> overrides)
-            {
-                Holder = holder;
-                Overrides = overrides;
+                systems.Add(type, boundSystem);
             }
         }
     }
@@ -228,7 +231,14 @@ namespace Wokarol.GameSystemsLocator
         /// Current instance registered for the system
         /// Note: This is the last instance from Instances list, aka the newest one
         /// </summary>
-        public object Instance => InstancesInternal[InstancesInternal.Count - 1];
+        public object Instance
+        {
+            get
+            {
+                if (InstancesInternal.Count == 0) return null;
+                else return InstancesInternal[InstancesInternal.Count - 1];
+            }
+        }
 
         /// <summary>
         /// Object that should be returned in case the Instances list has no elements <see cref="GameSystems.ConfigurationBuilder.Add{T}(T, bool)"/>
