@@ -38,9 +38,11 @@ public class GameConfig : ISystemConfiguration
 }
 ```
 
-For configuration you have to define the ` PrefabPath ` which points to prefab in resources that will be loaded on game start.
+If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Locator with the systems present on the prefab. Prefab is loaded before scene is loaded.
 
 ` .Add<T>(...) ` is used to add a game system container to the locator. Optionally it can define if the system is ` required ` or if it has a ` nullObject ` instance.
+
+> If the ` PrefabPath ` is not set, ` required ` has no effect
 
 > For more information, refer to in-code documentation
 

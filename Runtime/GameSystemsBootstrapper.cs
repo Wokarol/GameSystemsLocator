@@ -31,29 +31,33 @@ namespace Wokarol.GameSystemsLocator
 
         private static void Initialize()
         {
-            // Holder is created to prevent Awake from running when the systems are spawned
-            var temporaryHolder = new GameObject();
-            temporaryHolder.SetActive(false);
+            GameSystems.Clear();
+            var builder = ConfigureGameSystems();
 
-            try
+            if (builder.IsSystemPrefabSet)
             {
-                var systemsObject = SetupGameSystems(temporaryHolder);
+                // Holder is created to prevent Awake from running when the systems are spawned
+                var temporaryHolder = new GameObject();
+                temporaryHolder.SetActive(false);
 
-                // Holder is removed so the the Awake methods can run
-                systemsObject.transform.SetParent(null);
-                UnityEngine.Object.DontDestroyOnLoad(systemsObject);
-            }
-            finally
-            {
-                UnityEngine.Object.Destroy(temporaryHolder);
+                try
+                {
+                    var systemsObject = SetupGameSystems(temporaryHolder, builder);
+
+                    // Holder is removed so the the Awake methods can run
+                    systemsObject.transform.SetParent(null);
+                    UnityEngine.Object.DontDestroyOnLoad(systemsObject);
+                }
+                finally
+                {
+                    UnityEngine.Object.Destroy(temporaryHolder);
+                }
             }
         }
 
-        private static GameObject SetupGameSystems(GameObject temporaryHolder)
+        private static GameObject SetupGameSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
         {
-            GameSystems.Clear();
 
-            var builder = ConfigureGameSystems();
             var systemsObject = CreateSystems(temporaryHolder, builder);
 
             GameSystems.InitializeSystemsObject(systemsObject);
