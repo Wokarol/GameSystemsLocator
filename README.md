@@ -13,7 +13,7 @@ To install the package, open Unity Package Manager
 ![](readme-src/upm.png)
 
 Then select "Add package from git URL..."  
-Then type ` https://github.com/Wokarol/GameSystemsLocator.git ` as the URL  
+Then type ` https://github.com/Wokarol/GameSystemsLocator.git#main ` as the URL  
 > *If you want to target a specific version, suffix the URL with ` #version `, for example ` https://github.com/Wokarol/GameSystemsLocator.git#v0.2.0 `*
 
 ## Usage
@@ -21,7 +21,7 @@ Then type ` https://github.com/Wokarol/GameSystemsLocator.git ` as the URL
 To start using the package you first have to **create a config class**.  
 This class has to implement ` ISystemConfiguration ` interface and cannot be static.
 
-This interface defines a single method, ` void Configure(GameSystems.ConfigurationBuilder builder) ` which should contain all the configuration and setup.
+This interface defines a single method, ` void Configure(GameSystems.ConfigurationBuilder builder) ` which uses the builder passed as an argument to configure the locator.
 
 Example of such class might look like so:
 ```cs
@@ -53,7 +53,7 @@ No additional configuration is needed
 
 > You can also pass the systems in a list directly, this will call ` GetComponent ` on them to retrieve a system.
 
-> Currently enabling an overrider loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit but I did not yet test it well enough to confirm that or deny
+> Currently enabling an overrider with ` Grab Systems From Children ` enabled loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit but I did not yet test it well enough to confirm that or deny
 
 ### Locating
 Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
