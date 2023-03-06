@@ -68,6 +68,19 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
+        // TODO: Fill docs
+        public static bool TryGet<T>(out T service) where T : class
+        {
+            service = Get<T>();
+            return service != null;
+        }
+
+        public static bool TryGet(Type type, out object service)
+        {
+            service = Get(type);
+            return service != null;
+        }
+
         internal static void Clear()
         {
             systems.Clear();
