@@ -89,6 +89,9 @@ namespace Wokarol.GameSystemsLocator
 
         internal static void InitializeSystemsObject(GameObject systemsObject)
         {
+            if (systemsObject == null)
+                return;
+
             foreach (var system in Systems)
             {
                 var s = systemsObject.GetComponentInChildren(system.Type, true);
