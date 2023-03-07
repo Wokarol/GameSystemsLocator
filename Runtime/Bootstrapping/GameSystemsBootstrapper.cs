@@ -73,7 +73,7 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
-        private static GameObject SetupGameSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
+        private static GameObject SetupGameSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
         {
 
             var systemsObject = CreateSystems(temporaryHolder, builder);
@@ -83,16 +83,16 @@ namespace Wokarol.GameSystemsLocator
             return systemsObject;
         }
 
-        private static GameSystems.ConfigurationBuilder ConfigureGameSystems()
+        private static ServiceLocatorBuilder ConfigureGameSystems()
         {
-            var builder = new GameSystems.ConfigurationBuilder();
+            var builder = new ServiceLocatorBuilder();
             var configurator = GetConfigurator();
 
             configurator.Configure(builder);
             return builder;
         }
 
-        private static GameObject CreateSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
+        private static GameObject CreateSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
         {
             var prefab = Resources.Load<GameObject>(builder.PrefabPath);
             if (prefab == null)
@@ -134,6 +134,6 @@ namespace Wokarol.GameSystemsLocator
         /// Run as the Game Systems Locator is bootrstrapped and should define types locator should expect 
         /// </summary>
         /// <param name="builder">The builder providing method needed to configure the locator</param>
-        void Configure(GameSystems.ConfigurationBuilder builder);
+        void Configure(ServiceLocatorBuilder builder);
     }
 }

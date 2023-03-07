@@ -5,12 +5,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("Wokarol.GameSystemsLocator.Tests")]
-namespace Wokarol.GameSystemsLocator
+namespace Wokarol.GameSystemsLocator.Old
 {
     /// <summary>
     /// Allows for fetching and managing systems present in the game
     /// </summary>
+    [Obsolete]
     public static class GameSystems
     {
         private static readonly Dictionary<Type, SystemBinding> systems = new();
@@ -188,6 +188,8 @@ namespace Wokarol.GameSystemsLocator
         /// <summary>
         /// Builder allowing for configuring the locator and the systems it should look for
         /// </summary>
+
+        [Obsolete]
         public class ConfigurationBuilder
         {
             /// <summary>
@@ -245,6 +247,8 @@ namespace Wokarol.GameSystemsLocator
     /// Describes the system and it's properties
     /// Note: The binding is not aware of type so the system instance should be obtained via the GameSystem class
     /// </summary>
+
+    [Obsolete]
     public class SystemBinding
     {
         internal readonly List<object> InstancesInternal = new List<object>();
