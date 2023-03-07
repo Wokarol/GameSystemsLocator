@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -29,7 +30,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
-        public IEnumerator Initialized_BoundSystem_ReturnsNull()
+        public IEnumerator Initialized_WithRoot_BoundSystem_ReturnsNull()
         {
             var systemsObject = new GameObject("Systems");
 
@@ -44,7 +45,47 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
-        public IEnumerator Initialized_LocatesBoundSingleton()
+        public IEnumerator Initialized_WithRoot_BoundSystem_WithTry_ReturnsFalse()
+        {
+            var systemsObject = new GameObject("Systems");
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.Add<Foo>();
+            });
+            if (GameSystems.TryGet(out Foo foundFoo))
+            {
+                Assert.Fail("Try Get returned true when the system should not be found");
+            }
+            else
+            {
+                Assert.That(foundFoo, Is.Null);
+            }
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_WithRoot_BoundSystem_WithTry_NotGeneric_ReturnsFalse()
+        {
+            var systemsObject = new GameObject("Systems");
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.Add<Foo>();
+            });
+            if (GameSystems.TryGet(typeof(Foo), out var foundFoo))
+            {
+                Assert.Fail("Try Get returned true when the system should not be found");
+            }
+            else
+            {
+                Assert.That(foundFoo, Is.Null);
+            }
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
@@ -60,7 +101,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
-        public IEnumerator Initialized_LocatesBoundSingleton_NonGeneric()
+        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_WithTry()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
@@ -69,14 +110,37 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 s.Add<Foo>();
             });
-            var foundFoo = GameSystems.Get<Foo>();
+
+            if (GameSystems.TryGet(out Foo foundFoo))
+            {
+                Assert.That(foundFoo, Is.EqualTo(foo));
+            }
+            else
+            {
+                Assert.Fail("Try Get returned false when the system should be found");
+            }
+
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_NonGeneric()
+        {
+            var systemsObject = new GameObject("Systems");
+            var foo = AddTestSystem<Foo>(systemsObject);
+
+            GameSystems.Initialize(systemsObject, s =>
+            {
+                s.Add<Foo>();
+            });
+            var foundFoo = GameSystems.Get(typeof(Foo));
 
             Assert.That(foundFoo, Is.EqualTo(foo));
             yield break;
         }
 
         [UnityTest]
-        public IEnumerator Initialized_LocatesBoundSingleton_AsInterface()
+        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_AsInterface()
         {
             var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
@@ -85,14 +149,14 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 s.Add<IBax>();
             });
-            var foundBax = GameSystems.Get(typeof(IBax));
+            var foundBax = GameSystems.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(bar));
             yield break;
         }
 
         [UnityTest]
-        public IEnumerator Initialized_ReturnsNullObject_WhenDefined()
+        public IEnumerator Initialized_WithRoot_ReturnsNullObject_WhenDefined()
         {
             var systemsObject = new GameObject("Systems");
 
@@ -109,7 +173,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
-        public IEnumerator Initialized_ReturnsInstance_EvenIf_NullObjectWhenDefined()
+        public IEnumerator Initialized_WithRoot_ReturnsInstance_EvenIf_NullObjectWhenDefined()
         {
             var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
@@ -127,7 +191,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [UnityTest]
-        public IEnumerator Initialized_LocatesOnlyCreatedSingletons()
+        public IEnumerator Initialized_WithRoot_LocatesOnlyCreatedSingletons()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
@@ -155,6 +219,32 @@ namespace Wokarol.GameSystemsLocator.Tests
             });
 
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_NoRoot_DoesNotThrow()
+        {
+            TestDelegate action = () => GameSystems.Initialize(null, s =>
+            {
+                s.Add<Foo>();
+            });
+
+            Assert.That(action, Throws.Nothing);
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_NoRoot_BoundsSystems()
+        {
+            GameSystems.Initialize(null, s =>
+            {
+                s.Add<Foo>();
+            });
+
+            var boundSystems = GameSystems.Systems.Select(vp => vp.Type);
+
+            Assert.That(boundSystems, Contains.Item(typeof(Foo)));
             yield break;
         }
     }
