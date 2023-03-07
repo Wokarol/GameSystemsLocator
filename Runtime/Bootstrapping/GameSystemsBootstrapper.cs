@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Wokarol.GameSystemsLocator
+namespace Wokarol.GameSystemsLocator.Bootstrapping
 {
 #if !GAME_SYSTEMS_DISABLE_BOOTSTRAPPER
     /// <summary>
