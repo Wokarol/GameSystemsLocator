@@ -49,47 +49,55 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
 
         private static void Initialize(bool shouldSkipPrefab)
         {
-            GameSystems.Clear();
-            var builder = ConfigureGameSystems();
+            // TODO: Update it with new Game Systems API
+            throw new NotImplementedException();
 
-            if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
-            {
-                // Holder is created to prevent Awake from running when the systems are spawned
-                var temporaryHolder = new GameObject();
-                temporaryHolder.SetActive(false);
+            //GameSystems.Clear();
+            //var builder = ConfigureGameSystems();
 
-                try
-                {
-                    var systemsObject = SetupGameSystems(temporaryHolder, builder);
+            //if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
+            //{
+            //    // Holder is created to prevent Awake from running when the systems are spawned
+            //    var temporaryHolder = new GameObject();
+            //    temporaryHolder.SetActive(false);
 
-                    // Holder is removed so the the Awake methods can run
-                    systemsObject.transform.SetParent(null);
-                    UnityEngine.Object.DontDestroyOnLoad(systemsObject);
-                }
-                finally
-                {
-                    UnityEngine.Object.Destroy(temporaryHolder);
-                }
-            }
+            //    try
+            //    {
+            //        var systemsObject = SetupGameSystems(temporaryHolder, builder);
+
+            //        // Holder is removed so the the Awake methods can run
+            //        systemsObject.transform.SetParent(null);
+            //        UnityEngine.Object.DontDestroyOnLoad(systemsObject);
+            //    }
+            //    finally
+            //    {
+            //        UnityEngine.Object.Destroy(temporaryHolder);
+            //    }
+            //}
         }
 
         private static GameObject SetupGameSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
         {
+            // TODO: Update it with new Game Systems API
+            throw new NotImplementedException();
 
-            var systemsObject = CreateSystems(temporaryHolder, builder);
+            //var systemsObject = CreateSystems(temporaryHolder, builder);
 
-            GameSystems.InitializeSystemsObject(systemsObject);
+            //GameSystems.InitializeSystemsObject(systemsObject);
 
-            return systemsObject;
+            //return systemsObject;
         }
 
         private static ServiceLocatorBuilder ConfigureGameSystems()
         {
-            var builder = new ServiceLocatorBuilder();
-            var configurator = GetConfigurator();
+            // TODO: Update it with new Game Systems API
+            throw new NotImplementedException();
 
-            configurator.Configure(builder);
-            return builder;
+            //var builder = new ServiceLocatorBuilder();
+            //var configurator = GetConfigurator();
+
+            //configurator.Configure(builder);
+            //return builder;
         }
 
         private static GameObject CreateSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
@@ -126,14 +134,14 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
 #endif
 
     /// <summary>
-    /// Mark a class that will be instanced and used for configuring the Game Systems Locator
+    /// Defines a class that the bootstrapper will use to initialize Game Systems
     /// </summary>
     public interface ISystemConfiguration
     {
         /// <summary>
-        /// Run as the Game Systems Locator is bootrstrapped and should define types locator should expect 
+        /// Executed during bootstrapping, used to configure the Game Systems
         /// </summary>
-        /// <param name="builder">The builder providing method needed to configure the locator</param>
+        /// <param name="builder">The builder providing methods needed to configure the locator</param>
         void Configure(ServiceLocatorBuilder builder);
     }
 }
