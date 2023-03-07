@@ -68,17 +68,28 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
-        // TODO: Fill docs
-        public static bool TryGet<T>(out T service) where T : class
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <typeparam name="T">Type of the system to locate</typeparam>
+        /// <param name="system">The system that was located or null if no instance is found</param>
+        /// <returns>True if the system is found</returns>
+        public static bool TryGet<T>(out T system) where T : class
         {
-            service = Get<T>();
-            return service != null;
+            system = Get<T>();
+            return system != null;
         }
 
-        public static bool TryGet(Type type, out object service)
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <param name="type">Type of the system to locate</param>
+        /// <param name="system">The system that was located or null if no instance is found</param>
+        /// <returns>True if the system is found</returns>
+        public static bool TryGet(Type type, out object system)
         {
-            service = Get(type);
-            return service != null;
+            system = Get(type);
+            return system != null;
         }
 
         internal static void Clear()
