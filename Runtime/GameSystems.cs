@@ -68,6 +68,30 @@ namespace Wokarol.GameSystemsLocator
             }
         }
 
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <typeparam name="T">Type of the system to locate</typeparam>
+        /// <param name="system">The system that was located or null if no instance is found</param>
+        /// <returns>True if the system is found</returns>
+        public static bool TryGet<T>(out T system) where T : class
+        {
+            system = Get<T>();
+            return system != null;
+        }
+
+        /// <summary>
+        /// Locates Game System matching the type
+        /// </summary>
+        /// <param name="type">Type of the system to locate</param>
+        /// <param name="system">The system that was located or null if no instance is found</param>
+        /// <returns>True if the system is found</returns>
+        public static bool TryGet(Type type, out object system)
+        {
+            system = Get(type);
+            return system != null;
+        }
+
         internal static void Clear()
         {
             systems.Clear();
@@ -76,6 +100,9 @@ namespace Wokarol.GameSystemsLocator
 
         internal static void InitializeSystemsObject(GameObject systemsObject)
         {
+            if (systemsObject == null)
+                return;
+
             foreach (var system in Systems)
             {
                 var s = systemsObject.GetComponentInChildren(system.Type, true);

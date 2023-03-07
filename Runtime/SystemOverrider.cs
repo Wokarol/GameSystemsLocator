@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Wokarol.GameSystemsLocator
 {
+    [DefaultExecutionOrder(-500)]
     public class SystemOverrider : MonoBehaviour
     {
         [SerializeField] private bool grabSystemsFromChildren = true;
