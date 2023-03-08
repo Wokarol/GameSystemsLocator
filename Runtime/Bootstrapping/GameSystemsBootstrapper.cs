@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Wokarol.GameSystemsLocator;
+using Wokarol.GameSystemsLocator.Core;
 
 namespace Wokarol.GameSystemsLocator.Bootstrapping
 {

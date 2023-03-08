@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Wokarol.GameSystemsLocator.Old;
 
 namespace Wokarol.GameSystemsLocator.Core
 {

@@ -1,7 +1,6 @@
 ﻿using System;
-using Wokarol.GameSystemsLocator.Core;
 
-namespace Wokarol.GameSystemsLocator
+namespace Wokarol.GameSystemsLocator.Core
 {
     /// <summary>
     /// Utility class for configuring the Service Locator

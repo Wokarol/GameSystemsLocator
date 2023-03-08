@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Wokarol.GameSystemsLocator
+namespace Wokarol.GameSystemsLocator.Components
 {
     [DefaultExecutionOrder(-500)]
     public class SystemOverrider : MonoBehaviour
