@@ -9,18 +9,46 @@ namespace Wokarol.GameSystemsLocator
 {
     public static class GameSystems
     {
-        public static IEnumerable<(Type Type, SystemContainer Binding)> Systems => throw new NotImplementedException();
-        public static void Clear() => throw new NotImplementedException();
-        public static T Get<T>() where T : class => throw new NotImplementedException();
-        // Note: checking for null instance is no longer a responsibility of the Get method
-        public static object Get(Type type) => throw new NotImplementedException();
-        public static bool TryGet<T>(out T system) where T : class => throw new NotImplementedException();
-        public static bool TryGet(Type type, out object system) => throw new NotImplementedException();
-        internal static void ApplyOverride(GameObject holder, List<GameObject> systems = null) => throw new NotImplementedException();
+        private static ServiceLocator locator = new ServiceLocator();
 
-        internal static void Initialize(GameObject systemsObject, Action<ServiceLocatorBuilder> value) => throw new NotImplementedException();
+        /// <inheritdoc cref="ServiceLocator.Systems"/>
+        public static IEnumerable<KeyValuePair<Type, SystemContainer>> Systems => locator.Systems;
 
-        internal static void InitializeSystemsObject(GameObject systemsObject) => throw new NotImplementedException();
-        internal static void RemoveOverride(GameObject holder, List<GameObject> systems = null) => throw new NotImplementedException();
+        /// <inheritdoc cref="ServiceLocator.Initialize(Action{ServiceLocatorBuilder}, GameObject)"/>
+        internal static void Initialize(Action<ServiceLocatorBuilder> configCallback, GameObject systemsRoot = null)
+        {
+            locator.Clear();
+            locator.Initialize(configCallback, systemsRoot);
+        }
+        
+        /// <inheritdoc cref="ServiceLocator.Initialize(Action{ServiceLocatorBuilder}, Func{ServiceLocatorBuilder, GameObject})"/>
+        internal static void Initialize(Action<ServiceLocatorBuilder> configCallback, Func<ServiceLocatorBuilder, GameObject> createSystemsRoot)
+        {
+            locator.Clear();
+            locator.Initialize(configCallback, createSystemsRoot);
+        }
+        
+        /// <inheritdoc cref="ServiceLocator.Clear"/>
+        public static void Clear() => locator.Clear();
+
+        
+        /// <inheritdoc cref="ServiceLocator.Get{T}"/>
+        public static T Get<T>() where T : class => locator.Get<T>();
+
+        /// <inheritdoc cref="ServiceLocator.Get(Type)"/>
+        public static object Get(Type type) => locator.Get(type);
+        
+        /// <inheritdoc cref="ServiceLocator.TryGet{T}(out T)"/>
+        public static bool TryGet<T>(out T system) where T : class => locator.TryGet<T>(out system);
+        
+        /// <inheritdoc cref="ServiceLocator.TryGet(Type, out object)"/>
+        public static bool TryGet(Type type, out object system) => locator.TryGet(type, out system);
+        
+        /// <inheritdoc cref="ServiceLocator.ApplyOverride(GameObject, List{GameObject})"/>
+        internal static void ApplyOverride(GameObject holder, List<GameObject> systems = null) => locator.ApplyOverride(holder, systems);
+        
+        /// <inheritdoc cref="ServiceLocator.RemoveOverride(GameObject, List{GameObject})"/>
+        internal static void RemoveOverride(GameObject holder, List<GameObject> systems = null) => locator.RemoveOverride(holder, systems);
+
     }
 }

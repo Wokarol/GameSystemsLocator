@@ -25,7 +25,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             TestDelegate action = () => GameSystems.Get<Foo>();
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Matches("not registered"));
             yield break;
         }
 
@@ -34,10 +34,10 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
             var foundFoo = GameSystems.Get<Foo>();
 
             Assert.That(foundFoo, Is.Null);
@@ -49,10 +49,10 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
             if (GameSystems.TryGet(out Foo foundFoo))
             {
                 Assert.Fail("Try Get returned true when the system should not be found");
@@ -69,10 +69,10 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
             if (GameSystems.TryGet(typeof(Foo), out var foundFoo))
             {
                 Assert.Fail("Try Get returned true when the system should not be found");
@@ -90,10 +90,10 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
             var foundFoo = GameSystems.Get<Foo>();
 
             Assert.That(foundFoo, Is.EqualTo(foo));
@@ -106,10 +106,10 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
 
             if (GameSystems.TryGet(out Foo foundFoo))
             {
@@ -129,10 +129,10 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
             var foundFoo = GameSystems.Get(typeof(Foo));
 
             Assert.That(foundFoo, Is.EqualTo(foo));
@@ -145,10 +145,10 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<IBax>();
-            });
+            }, systemsObject);
             var foundBax = GameSystems.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(bar));
@@ -162,10 +162,10 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             var nullBax = new NullBax();
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<IBax>(nullObject: nullBax);
-            });
+            }, systemsObject);
             var foundBax = GameSystems.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(nullBax));
@@ -180,10 +180,10 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             var nullBax = new NullBax();
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<IBax>(nullObject: nullBax);
-            });
+            }, systemsObject);
             var foundBax = GameSystems.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(bar));
@@ -196,11 +196,11 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
                 s.Add<Bar>();
-            });
+            }, systemsObject);
             var foundFoo = GameSystems.Get<Bar>();
 
             Assert.That(foundFoo, Is.Null);
@@ -212,11 +212,11 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             var systemsObject = new GameObject("Systems");
 
-            TestDelegate action = () => GameSystems.Initialize(systemsObject, s =>
+            TestDelegate action = () => GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
                 s.Add<Foo>();
-            });
+            }, systemsObject);
 
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
             yield break;
@@ -225,7 +225,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         [UnityTest]
         public IEnumerator Initialized_NoRoot_DoesNotThrow()
         {
-            TestDelegate action = () => GameSystems.Initialize(null, s =>
+            TestDelegate action = () => GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
             });
@@ -237,12 +237,12 @@ namespace Wokarol.GameSystemsLocator.Tests
         [UnityTest]
         public IEnumerator Initialized_NoRoot_BoundsSystems()
         {
-            GameSystems.Initialize(null, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>();
             });
 
-            var boundSystems = GameSystems.Systems.Select(vp => vp.Type);
+            var boundSystems = GameSystems.Systems.Select(vp => vp.Key);
 
             Assert.That(boundSystems, Contains.Item(typeof(Foo)));
             yield break;
@@ -280,10 +280,10 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<Foo>(required: true);
-            });
+            }, systemsObject);
 
             Assert.That(logger.Errors, Has.Count.EqualTo(1));
             Assert.That(logger.Errors[0], Does.Match(".* binding.* required.*"));
@@ -301,10 +301,10 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             baseBar = AddTestSystem<Bar>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            GameSystems.Initialize(s =>
             {
                 s.Add<IBax>();
-            });
+            }, systemsObject);
         }
 
         [Test]
