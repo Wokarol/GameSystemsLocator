@@ -80,6 +80,9 @@ else
 You can use Prefab Overrides to make this process nicer
 
 ## Changelog
+### v0.7.1
+- **Fix:** Systems prefab being removed after creation
+
 ### v0.7.0
 - **Add:** Non-static Service Locator class
 - **Change:** Complete overhaul of the code architecture
