@@ -13,7 +13,7 @@ namespace Wokarol.GameSystemsLocator.Core
         /// Path to the prefab that should be spawned as the Game Systems root
         /// </summary>
         public string PrefabPath { get; set; }
-        public bool IsSystemPrefabSet => String.IsNullOrEmpty(PrefabPath);
+        public bool IsSystemPrefabSet => !String.IsNullOrEmpty(PrefabPath);
 
         public ServiceLocatorBuilder(ServiceLocator locator)
         {
