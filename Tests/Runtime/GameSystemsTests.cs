@@ -1,59 +1,56 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
+using Wokarol.GameSystemsLocator.Core;
 
 namespace Wokarol.GameSystemsLocator.Tests
 {
     public class GameSystemsTests : GameSystemsTestsBase
     {
-        [UnityTest]
-        public IEnumerator Cleared_ContainsNoBindings()
+        [Test]
+        public void Cleared_ContainsNoBindings()
         {
-            var systems = GameSystems.Systems;
+            var systems = locator.Systems;
 
             Assert.That(systems, Is.Empty);
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Cleared_WhenTryingToLocate_Throws()
+        [Test]
+        public void Cleared_WhenTryingToLocate_Throws()
         {
-            TestDelegate action = () => GameSystems.Get<Foo>();
+            TestDelegate action = () => locator.Get<Foo>();
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
-            yield break;
+            Assert.That(action, 
+                Throws.Exception.TypeOf<InvalidOperationException>()
+                .And.Message.Matches("not.*initialized"));
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_BoundSystem_ReturnsNull()
+        [Test]
+        public void Initialized_WithRoot_BoundSystem_ReturnsNull()
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
-            var foundFoo = GameSystems.Get<Foo>();
+            }, systemsObject);
+            var foundFoo = locator.Get<Foo>();
 
             Assert.That(foundFoo, Is.Null);
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_BoundSystem_WithTry_ReturnsFalse()
+        [Test]
+        public void Initialized_WithRoot_BoundSystem_WithTry_ReturnsFalse()
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
-            if (GameSystems.TryGet(out Foo foundFoo))
+            }, systemsObject);
+            if (locator.TryGet(out Foo foundFoo))
             {
                 Assert.Fail("Try Get returned true when the system should not be found");
             }
@@ -61,19 +58,18 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 Assert.That(foundFoo, Is.Null);
             }
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_BoundSystem_WithTry_NotGeneric_ReturnsFalse()
+        [Test]
+        public void Initialized_WithRoot_BoundSystem_WithTry_NotGeneric_ReturnsFalse()
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
-            if (GameSystems.TryGet(typeof(Foo), out var foundFoo))
+            }, systemsObject);
+            if (locator.TryGet(typeof(Foo), out var foundFoo))
             {
                 Assert.Fail("Try Get returned true when the system should not be found");
             }
@@ -81,37 +77,57 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 Assert.That(foundFoo, Is.Null);
             }
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton()
+        [Test]
+        public void Initialized_WithRoot_LocatesBoundSingleton()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
-            var foundFoo = GameSystems.Get<Foo>();
+            }, systemsObject);
+            var foundFoo = locator.Get<Foo>();
 
             Assert.That(foundFoo, Is.EqualTo(foo));
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_WithTry()
+        [Test]
+        public void Initialized_WithRootFactoryMethod_LocatesBoundSingleton()
+        {
+            Foo foo = null;
+
+            locator.Initialize(
+            s =>
+            {
+                s.Add<Foo>();
+            }, 
+            b =>
+            {
+                var systemsObject = new GameObject("Systems");
+                foo = AddTestSystem<Foo>(systemsObject);
+                return systemsObject;
+            });
+
+            var foundFoo = locator.Get<Foo>();
+
+            Assert.That(foundFoo, Is.EqualTo(foo));
+        }
+
+        [Test]
+        public void Initialized_WithRoot_LocatesBoundSingleton_WithTry()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
+            }, systemsObject);
 
-            if (GameSystems.TryGet(out Foo foundFoo))
+            if (locator.TryGet(out Foo foundFoo))
             {
                 Assert.That(foundFoo, Is.EqualTo(foo));
             }
@@ -119,133 +135,149 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 Assert.Fail("Try Get returned false when the system should be found");
             }
-
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_NonGeneric()
+        [Test]
+        public void Initialized_WithRoot_LocatesBoundSingleton_NonGeneric()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
-            });
-            var foundFoo = GameSystems.Get(typeof(Foo));
+            }, systemsObject);
+            var foundFoo = locator.Get(typeof(Foo));
 
             Assert.That(foundFoo, Is.EqualTo(foo));
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_LocatesBoundSingleton_AsInterface()
+        [Test]
+        public void Initialized_WithRoot_LocatesBoundSingleton_AsInterface()
         {
             var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<IBax>();
-            });
-            var foundBax = GameSystems.Get<IBax>();
+            }, systemsObject);
+            var foundBax = locator.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(bar));
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_ReturnsNullObject_WhenDefined()
+        [Test]
+        public void Initialized_WithRoot_ReturnsNullObject_WhenDefined()
         {
             var systemsObject = new GameObject("Systems");
 
             var nullBax = new NullBax();
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<IBax>(nullObject: nullBax);
-            });
-            var foundBax = GameSystems.Get<IBax>();
+            }, systemsObject);
+            var foundBax = locator.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(nullBax));
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_ReturnsInstance_EvenIf_NullObjectWhenDefined()
+        [Test]
+        public void Initialized_WithRoot_ReturnsInstance_EvenIf_NullObjectWhenDefined()
         {
             var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
 
             var nullBax = new NullBax();
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<IBax>(nullObject: nullBax);
-            });
-            var foundBax = GameSystems.Get<IBax>();
+            }, systemsObject);
+            var foundBax = locator.Get<IBax>();
 
             Assert.That(foundBax, Is.EqualTo(bar));
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_WithRoot_LocatesOnlyCreatedSingletons()
+        [Test]
+        public void Initialized_WithRoot_LocatesOnlyCreatedSingletons()
         {
             var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
                 s.Add<Bar>();
-            });
-            var foundFoo = GameSystems.Get<Bar>();
+            }, systemsObject);
+            var foundFoo = locator.Get<Bar>();
 
             Assert.That(foundFoo, Is.Null);
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Invalid_CannotAddSingletonTwice()
+        [Test]
+        public void Invalid_CannotAddSingletonTwice()
         {
             var systemsObject = new GameObject("Systems");
 
-            TestDelegate action = () => GameSystems.Initialize(systemsObject, s =>
+            TestDelegate action = () => locator.Initialize(s =>
             {
                 s.Add<Foo>();
                 s.Add<Foo>();
-            });
+            }, systemsObject);
 
             Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_NoRoot_DoesNotThrow()
+        [Test]
+        public void Initialized_NoRoot_DoesNotThrow()
         {
-            TestDelegate action = () => GameSystems.Initialize(null, s =>
+            TestDelegate action = () => locator.Initialize(s =>
             {
                 s.Add<Foo>();
             });
 
             Assert.That(action, Throws.Nothing);
-            yield break;
         }
 
-        [UnityTest]
-        public IEnumerator Initialized_NoRoot_BoundsSystems()
+        [Test]
+        public void Initialized_NoRoot_BoundsSystems()
         {
-            GameSystems.Initialize(null, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>();
             });
 
-            var boundSystems = GameSystems.Systems.Select(vp => vp.Type);
+            var boundSystems = locator.Systems.Select(vp => vp.Key);
 
             Assert.That(boundSystems, Contains.Item(typeof(Foo)));
-            yield break;
+        }
+
+        [Test]
+        public void Initialized_NoRoot_GetReturnNulls()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Foo>();
+            });
+
+            TestDelegate action = () => locator.Get<Foo>();
+
+            Assert.That(action, Throws.Nothing);
+        }
+
+        [Test]
+        public void Initialized_NoRoot_ViaFactoryMethod_GetReturnNulls()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Foo>();
+            }, b => null);
+
+            TestDelegate action = () => locator.Get<Foo>();
+
+            Assert.That(action, Throws.Nothing);
         }
     }
 
@@ -275,19 +307,18 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
 
-        [UnityTest]
-        public IEnumerator Invalid_RequiredSingletons_HaveToBePresent()
+        [Test]
+        public void Invalid_RequiredSingletons_HaveToBePresent()
         {
             var systemsObject = new GameObject("Systems");
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<Foo>(required: true);
-            });
+            }, systemsObject);
 
             Assert.That(logger.Errors, Has.Count.EqualTo(1));
             Assert.That(logger.Errors[0], Does.Match(".* binding.* required.*"));
-            yield break;
         }
     }
 
@@ -301,20 +332,19 @@ namespace Wokarol.GameSystemsLocator.Tests
             var systemsObject = new GameObject("Systems");
             baseBar = AddTestSystem<Bar>(systemsObject);
 
-            GameSystems.Initialize(systemsObject, s =>
+            locator.Initialize(s =>
             {
                 s.Add<IBax>();
-            });
+            }, systemsObject);
         }
 
         [Test]
         public void NotOverriten_ReturnsBase()
         {
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(baseBar));
         }
-
 
         [Test]
         public void Overriten_ReturnsOverride()
@@ -322,8 +352,25 @@ namespace Wokarol.GameSystemsLocator.Tests
             var holder = new GameObject("Better Systems");
             var betterBar = AddTestSystem<BetterBar>(holder);
 
-            GameSystems.ApplyOverride(holder);
-            var bax = GameSystems.Get<IBax>();
+            locator.ApplyOverride(holder);
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar));
+        }
+
+        [Test]
+        public void Overriten_WithList_ReturnsOverride()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            List<GameObject> overrides = new List<GameObject>()
+            {
+                betterBar.gameObject,
+            };
+
+            locator.ApplyOverride(null, overrides);
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar));
         }
@@ -336,9 +383,9 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar1 = AddTestSystem<BetterBar>(holder1);
             var betterBar2 = AddTestSystem<BetterBar>(holder2);
 
-            GameSystems.ApplyOverride(holder1);
-            GameSystems.ApplyOverride(holder2);
-            var bax = GameSystems.Get<IBax>();
+            locator.ApplyOverride(holder1);
+            locator.ApplyOverride(holder2);
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar2));
         }
@@ -349,10 +396,28 @@ namespace Wokarol.GameSystemsLocator.Tests
             var holder = new GameObject("Better Systems");
             var betterBar = AddTestSystem<BetterBar>(holder);
 
-            GameSystems.ApplyOverride(holder);
-            GameSystems.RemoveOverride(holder);
+            locator.ApplyOverride(holder);
+            locator.RemoveOverride(holder);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_WithList_AndRemoved_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            List<GameObject> overrides = new List<GameObject>()
+            {
+                betterBar.gameObject,
+            };
+
+            locator.ApplyOverride(null, overrides);
+            locator.RemoveOverride(null, overrides);
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(baseBar));
         }
@@ -363,11 +428,11 @@ namespace Wokarol.GameSystemsLocator.Tests
             var holder = new GameObject("Better Systems");
             var betterBar = AddTestSystem<BetterBar>(holder);
 
-            GameSystems.ApplyOverride(holder);
-            GameSystems.RemoveOverride(holder);
-            GameSystems.ApplyOverride(holder);
+            locator.ApplyOverride(holder);
+            locator.RemoveOverride(holder);
+            locator.ApplyOverride(holder);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar));
         }
@@ -380,13 +445,13 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar1 = AddTestSystem<BetterBar>(holder1);
             var betterBar2 = AddTestSystem<BetterBar>(holder2);
 
-            GameSystems.ApplyOverride(holder1);
-            GameSystems.ApplyOverride(holder2);
+            locator.ApplyOverride(holder1);
+            locator.ApplyOverride(holder2);
 
-            GameSystems.RemoveOverride(holder2);
-            GameSystems.RemoveOverride(holder1);
+            locator.RemoveOverride(holder2);
+            locator.RemoveOverride(holder1);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(baseBar));
         }
@@ -399,13 +464,13 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar1 = AddTestSystem<BetterBar>(holder1);
             var betterBar2 = AddTestSystem<BetterBar>(holder2);
 
-            GameSystems.ApplyOverride(holder1);
-            GameSystems.ApplyOverride(holder2);
+            locator.ApplyOverride(holder1);
+            locator.ApplyOverride(holder2);
 
-            GameSystems.RemoveOverride(holder1);
-            GameSystems.RemoveOverride(holder2);
+            locator.RemoveOverride(holder1);
+            locator.RemoveOverride(holder2);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(baseBar));
         }
@@ -418,12 +483,12 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar1 = AddTestSystem<BetterBar>(holder1);
             var betterBar2 = AddTestSystem<BetterBar>(holder2);
 
-            GameSystems.ApplyOverride(holder1);
-            GameSystems.ApplyOverride(holder2);
+            locator.ApplyOverride(holder1);
+            locator.ApplyOverride(holder2);
 
-            GameSystems.RemoveOverride(holder1);
+            locator.RemoveOverride(holder1);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar2));
         }
@@ -436,12 +501,12 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar1 = AddTestSystem<BetterBar>(holder1);
             var betterBar2 = AddTestSystem<BetterBar>(holder2);
 
-            GameSystems.ApplyOverride(holder1);
-            GameSystems.ApplyOverride(holder2);
+            locator.ApplyOverride(holder1);
+            locator.ApplyOverride(holder2);
 
-            GameSystems.RemoveOverride(holder2);
+            locator.RemoveOverride(holder2);
 
-            var bax = GameSystems.Get<IBax>();
+            var bax = locator.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar1));
         }
@@ -456,10 +521,12 @@ namespace Wokarol.GameSystemsLocator.Tests
 
     public class GameSystemsTestsBase
     {
+        protected ServiceLocator locator;
+
         [SetUp]
         public void Setup()
         {
-            GameSystems.Clear();
+            locator = new ServiceLocator();
         }
 
         protected static T AddTestSystem<T>(GameObject systemsObject) where T : Component
