@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Wokarol.GameSystemsLocator;
 
 namespace Wokarol.GameSystemsLocator.Bootstrapping
 {
@@ -49,55 +50,28 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
 
         private static void Initialize(bool shouldSkipPrefab)
         {
-            // TODO: Update it with new Game Systems API
-            throw new NotImplementedException();
+            GameSystems.Clear();
+            var configurator = GetConfigurator();
 
-            //GameSystems.Clear();
-            //var builder = ConfigureGameSystems();
+            var temporaryHolder = new GameObject("TEMP HOLDER: SHOULD BE DELETED");
+            temporaryHolder.SetActive(false);
 
-            //if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
-            //{
-            //    // Holder is created to prevent Awake from running when the systems are spawned
-            //    var temporaryHolder = new GameObject();
-            //    temporaryHolder.SetActive(false);
-
-            //    try
-            //    {
-            //        var systemsObject = SetupGameSystems(temporaryHolder, builder);
-
-            //        // Holder is removed so the the Awake methods can run
-            //        systemsObject.transform.SetParent(null);
-            //        UnityEngine.Object.DontDestroyOnLoad(systemsObject);
-            //    }
-            //    finally
-            //    {
-            //        UnityEngine.Object.Destroy(temporaryHolder);
-            //    }
-            //}
+            try
+            {
+                GameSystems.Initialize(configurator.Configure, b => CreateSystemsIfNeeded(shouldSkipPrefab, b, temporaryHolder));
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(temporaryHolder);
+            }
         }
 
-        private static GameObject SetupGameSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
+        private static GameObject CreateSystemsIfNeeded(bool shouldSkipPrefab, ServiceLocatorBuilder builder, GameObject temporaryHolder)
         {
-            // TODO: Update it with new Game Systems API
-            throw new NotImplementedException();
+            if (!builder.IsSystemPrefabSet || shouldSkipPrefab)
+                return null;
 
-            //var systemsObject = CreateSystems(temporaryHolder, builder);
-
-            //GameSystems.InitializeSystemsObject(systemsObject);
-
-            //return systemsObject;
-        }
-
-        private static ServiceLocatorBuilder ConfigureGameSystems()
-        {
-            // TODO: Update it with new Game Systems API
-            throw new NotImplementedException();
-
-            //var builder = new ServiceLocatorBuilder();
-            //var configurator = GetConfigurator();
-
-            //configurator.Configure(builder);
-            //return builder;
+            return CreateSystems(temporaryHolder, builder);
         }
 
         private static GameObject CreateSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)

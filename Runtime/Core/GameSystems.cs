@@ -49,6 +49,5 @@ namespace Wokarol.GameSystemsLocator
         
         /// <inheritdoc cref="ServiceLocator.RemoveOverride(GameObject, List{GameObject})"/>
         internal static void RemoveOverride(GameObject holder, List<GameObject> overrides = null) => locator.RemoveOverride(holder, overrides);
-
     }
 }
