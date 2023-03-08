@@ -26,7 +26,9 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             TestDelegate action = () => GameSystems.Get<Foo>();
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Matches("not.*initialized"));
+            Assert.That(action, 
+                Throws.Exception.TypeOf<InvalidOperationException>()
+                .And.Message.Matches("not.*initialized"));
             yield break;
         }
 
@@ -95,6 +97,29 @@ namespace Wokarol.GameSystemsLocator.Tests
             {
                 s.Add<Foo>();
             }, systemsObject);
+            var foundFoo = GameSystems.Get<Foo>();
+
+            Assert.That(foundFoo, Is.EqualTo(foo));
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_WithRootFactoryMethod_LocatesBoundSingleton()
+        {
+            Foo foo = null;
+
+            GameSystems.Initialize(
+            s =>
+            {
+                s.Add<Foo>();
+            }, 
+            b =>
+            {
+                var systemsObject = new GameObject("Systems");
+                foo = AddTestSystem<Foo>(systemsObject);
+                return systemsObject;
+            });
+
             var foundFoo = GameSystems.Get<Foo>();
 
             Assert.That(foundFoo, Is.EqualTo(foo));
@@ -246,6 +271,34 @@ namespace Wokarol.GameSystemsLocator.Tests
             var boundSystems = GameSystems.Systems.Select(vp => vp.Key);
 
             Assert.That(boundSystems, Contains.Item(typeof(Foo)));
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_NoRoot_GetReturnNulls()
+        {
+            GameSystems.Initialize(s =>
+            {
+                s.Add<Foo>();
+            });
+
+            TestDelegate action = () => GameSystems.Get<Foo>();
+
+            Assert.That(action, Throws.Nothing);
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialized_NoRoot_ViaFactoryMethod_GetReturnNulls()
+        {
+            GameSystems.Initialize(s =>
+            {
+                s.Add<Foo>();
+            }, b => null);
+
+            TestDelegate action = () => GameSystems.Get<Foo>();
+
+            Assert.That(action, Throws.Nothing);
             yield break;
         }
     }

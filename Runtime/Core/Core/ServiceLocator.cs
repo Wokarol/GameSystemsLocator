@@ -23,12 +23,11 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <param name="systemsRoot">Game Object with systems to bind upon initialization</param>
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, GameObject systemsRoot = null) => Initialize(configCallback, b => systemsRoot);
 
-        // TODO: Add tests for system root factory method
         /// <summary>
         /// Initializes the service locator
         /// </summary>
         /// <param name="configCallback">Method called to configure the locator</param>
-        /// <param name="createSystemsRoot">Method to call when getting an object with systems to bind upon initialization</param>
+        /// <param name="createSystemsRoot">Method to call when initializing the system root</param>
         /// <exception cref="InvalidOperationException"></exception>
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, Func<ServiceLocatorBuilder, GameObject> createSystemsRoot)
         {
