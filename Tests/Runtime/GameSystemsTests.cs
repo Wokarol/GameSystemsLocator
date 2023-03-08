@@ -25,7 +25,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             TestDelegate action = () => GameSystems.Get<Foo>();
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Matches("not registered"));
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Matches("not.*initialized"));
             yield break;
         }
 

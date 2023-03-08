@@ -10,6 +10,12 @@ namespace Wokarol.GameSystemsLocator.Core
     {
         internal readonly List<object> BoundInstances = new List<object>();
 
+        public SystemContainer(object nullInstance, bool required)
+        {
+            NullInstance = nullInstance;
+            Required = required;
+        }
+
         /// <summary>
         /// List of instances bound to the container
         /// </summary>
@@ -37,12 +43,12 @@ namespace Wokarol.GameSystemsLocator.Core
         /// Defaut object to be returned where there is no instance bound to the container.
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
-        public object NullInstance { get; private set; }
+        public readonly object NullInstance;
 
         /// <summary>
         /// Defines if there always should be a system bound to this container
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
-        public bool Required { get; internal set; }
+        public readonly bool Required;
     }
 }

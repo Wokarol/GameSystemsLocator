@@ -45,10 +45,10 @@ namespace Wokarol.GameSystemsLocator
         public static bool TryGet(Type type, out object system) => locator.TryGet(type, out system);
         
         /// <inheritdoc cref="ServiceLocator.ApplyOverride(GameObject, List{GameObject})"/>
-        internal static void ApplyOverride(GameObject holder, List<GameObject> systems = null) => locator.ApplyOverride(holder, systems);
+        internal static void ApplyOverride(GameObject holder, List<GameObject> overrides = null) => locator.ApplyOverride(holder, overrides);
         
         /// <inheritdoc cref="ServiceLocator.RemoveOverride(GameObject, List{GameObject})"/>
-        internal static void RemoveOverride(GameObject holder, List<GameObject> systems = null) => locator.RemoveOverride(holder, systems);
+        internal static void RemoveOverride(GameObject holder, List<GameObject> overrides = null) => locator.RemoveOverride(holder, overrides);
 
     }
 }

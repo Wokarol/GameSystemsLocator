@@ -21,6 +21,14 @@ namespace Wokarol.GameSystemsLocator.Core
         {
             if (isInitialized)
                 throw new InvalidOperationException("Service Locator cannot be initialized twice, Clear the locator before second initilization");
+
+            var builder = new ServiceLocatorBuilder(this);
+            configCallback(builder);
+
+            var root = createSystemsRoot(builder);
+            if (root != null) BindSystemsFromObject(root);
+
+            isInitialized = true;
         }
 
         public void Clear()
@@ -59,12 +67,12 @@ namespace Wokarol.GameSystemsLocator.Core
             return instance;
         }
 
-        public void ApplyOverride(GameObject holder = null, List<GameObject> systems = null)
+        public void ApplyOverride(GameObject holder = null, List<GameObject> overrides = null)
         {
             throw new NotImplementedException();
         }
 
-        public void RemoveOverride(GameObject holder = null, List<GameObject> system = null)
+        public void RemoveOverride(GameObject holder = null, List<GameObject> overrides = null)
         {
             throw new NotImplementedException();
         }
@@ -72,13 +80,34 @@ namespace Wokarol.GameSystemsLocator.Core
         // Note: This method now takes the responsibility of ConfigurationBuilder.Add
         internal void Add(Type type, object nullObject, bool required)
         {
-            throw new NotImplementedException();
+            if (systems.ContainsKey(type))
+                throw new InvalidOperationException("The system type can only be registered once");
+
+            systems[type] = new SystemContainer(nullObject, required);
         }
 
         private void AssertInitialization()
         {
             if (!isInitialized)
                 throw new InvalidOperationException("Service Locator is not yet initialized, cannot perform the operation");
+        }
+
+        private void BindSystemsFromObject(GameObject rootObject, bool errorOnRequired = true)
+        {
+            foreach (var system in systems)
+            {
+                var s = rootObject.GetComponentInChildren(system.Key, true);
+
+                if (s != null)
+                {
+                    system.Value.BoundInstances.Add(s);
+                }
+                else
+                {
+                    if (system.Value.Required && errorOnRequired)
+                        Debug.LogError($"The binding for {system.Key.FullName} is required");
+                }
+            }
         }
     }
 }
