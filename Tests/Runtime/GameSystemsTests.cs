@@ -9,6 +9,7 @@ using UnityEngine.TestTools;
 
 namespace Wokarol.GameSystemsLocator.Tests
 {
+    // TODO: Ditch static wrapper for the tests and use service locator directly
     public class GameSystemsTests : GameSystemsTestsBase
     {
         [UnityTest]
@@ -315,7 +316,6 @@ namespace Wokarol.GameSystemsLocator.Tests
             Assert.That(bax, Is.EqualTo(baseBar));
         }
 
-
         [Test]
         public void Overriten_ReturnsOverride()
         {
@@ -323,6 +323,23 @@ namespace Wokarol.GameSystemsLocator.Tests
             var betterBar = AddTestSystem<BetterBar>(holder);
 
             GameSystems.ApplyOverride(holder);
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(betterBar));
+        }
+
+        [Test]
+        public void Overriten_WithList_ReturnsOverride()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            List<GameObject> overrides = new List<GameObject>()
+            {
+                betterBar.gameObject,
+            };
+
+            GameSystems.ApplyOverride(null, overrides);
             var bax = GameSystems.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(betterBar));
@@ -352,6 +369,24 @@ namespace Wokarol.GameSystemsLocator.Tests
             GameSystems.ApplyOverride(holder);
             GameSystems.RemoveOverride(holder);
 
+            var bax = GameSystems.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_WithList_AndRemoved_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            List<GameObject> overrides = new List<GameObject>()
+            {
+                betterBar.gameObject,
+            };
+
+            GameSystems.ApplyOverride(null, overrides);
+            GameSystems.RemoveOverride(null, overrides);
             var bax = GameSystems.Get<IBax>();
 
             Assert.That(bax, Is.EqualTo(baseBar));

@@ -17,6 +17,7 @@ namespace Wokarol.GameSystemsLocator.Core
 
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, GameObject systemsRoot = null) => Initialize(configCallback, b => systemsRoot);
 
+        // TODO: Add tests for system root factory method
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, Func<ServiceLocatorBuilder, GameObject> createSystemsRoot)
         {
             if (isInitialized)
@@ -69,12 +70,38 @@ namespace Wokarol.GameSystemsLocator.Core
 
         public void ApplyOverride(GameObject holder = null, List<GameObject> overrides = null)
         {
-            throw new NotImplementedException();
+            AssertInitialization();
+
+            if (holder != null)
+                BindSystemsFromObject(holder, false);
+
+            if (overrides != null)
+            {
+                foreach (var system in Systems)
+                    foreach (var obj in overrides)
+                    {
+                        if (obj.TryGetComponent(system.Key, out var s))
+                            system.Value.BoundInstances.Add(s);
+                    }
+            }
         }
 
         public void RemoveOverride(GameObject holder = null, List<GameObject> overrides = null)
         {
-            throw new NotImplementedException();
+            AssertInitialization();
+
+            if (holder != null)
+                RemoveSystemsFromObject(holder);
+
+            if (overrides != null)
+            {
+                foreach (var system in Systems)
+                    foreach (var obj in overrides)
+                    {
+                        if (obj.TryGetComponent(system.Key, out var s))
+                            system.Value.BoundInstances.Remove(s);
+                    }
+            }
         }
 
         // Note: This method now takes the responsibility of ConfigurationBuilder.Add
@@ -106,6 +133,19 @@ namespace Wokarol.GameSystemsLocator.Core
                 {
                     if (system.Value.Required && errorOnRequired)
                         Debug.LogError($"The binding for {system.Key.FullName} is required");
+                }
+            }
+        }
+
+        private void RemoveSystemsFromObject(GameObject rootObject)
+        {
+            foreach (var system in systems)
+            {
+                var s = rootObject.GetComponentInChildren(system.Key, true);
+
+                if (s != null)
+                {
+                    system.Value.BoundInstances.Remove(s);
                 }
             }
         }
