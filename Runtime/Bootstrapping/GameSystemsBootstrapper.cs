@@ -62,6 +62,8 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
             }
             finally
             {
+                UnityEngine.Object.DontDestroyOnLoad(temporaryHolder);
+                temporaryHolder.transform.DetachChildren();
                 UnityEngine.Object.Destroy(temporaryHolder);
             }
         }

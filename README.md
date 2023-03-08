@@ -82,6 +82,9 @@ You can use Prefab Overrides to make this process nicer
 > Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed
 
 ## Changelog
+### v0.7.1
+- **Fix:** Systems prefab being removed after creation
+
 ### v0.7.0
 - **Add:** Non-static Service Locator class
 - **Change:** Complete overhaul of the code architecture
