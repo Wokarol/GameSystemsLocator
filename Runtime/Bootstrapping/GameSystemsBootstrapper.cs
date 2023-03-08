@@ -2,8 +2,9 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Wokarol.GameSystemsLocator.Core;
 
-namespace Wokarol.GameSystemsLocator
+namespace Wokarol.GameSystemsLocator.Bootstrapping
 {
 #if !GAME_SYSTEMS_DISABLE_BOOTSTRAPPER
     /// <summary>
@@ -50,49 +51,30 @@ namespace Wokarol.GameSystemsLocator
         private static void Initialize(bool shouldSkipPrefab)
         {
             GameSystems.Clear();
-            var builder = ConfigureGameSystems();
+            var configurator = GetConfigurator();
 
-            if (builder.IsSystemPrefabSet && !shouldSkipPrefab)
+            var temporaryHolder = new GameObject("TEMP HOLDER: SHOULD BE DELETED");
+            temporaryHolder.SetActive(false);
+
+            try
             {
-                // Holder is created to prevent Awake from running when the systems are spawned
-                var temporaryHolder = new GameObject();
-                temporaryHolder.SetActive(false);
-
-                try
-                {
-                    var systemsObject = SetupGameSystems(temporaryHolder, builder);
-
-                    // Holder is removed so the the Awake methods can run
-                    systemsObject.transform.SetParent(null);
-                    UnityEngine.Object.DontDestroyOnLoad(systemsObject);
-                }
-                finally
-                {
-                    UnityEngine.Object.Destroy(temporaryHolder);
-                }
+                GameSystems.Initialize(configurator.Configure, b => CreateSystemsIfNeeded(shouldSkipPrefab, b, temporaryHolder));
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(temporaryHolder);
             }
         }
 
-        private static GameObject SetupGameSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
+        private static GameObject CreateSystemsIfNeeded(bool shouldSkipPrefab, ServiceLocatorBuilder builder, GameObject temporaryHolder)
         {
+            if (!builder.IsSystemPrefabSet || shouldSkipPrefab)
+                return null;
 
-            var systemsObject = CreateSystems(temporaryHolder, builder);
-
-            GameSystems.InitializeSystemsObject(systemsObject);
-
-            return systemsObject;
+            return CreateSystems(temporaryHolder, builder);
         }
 
-        private static GameSystems.ConfigurationBuilder ConfigureGameSystems()
-        {
-            var builder = new GameSystems.ConfigurationBuilder();
-            var configurator = GetConfigurator();
-
-            configurator.Configure(builder);
-            return builder;
-        }
-
-        private static GameObject CreateSystems(GameObject temporaryHolder, GameSystems.ConfigurationBuilder builder)
+        private static GameObject CreateSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
         {
             var prefab = Resources.Load<GameObject>(builder.PrefabPath);
             if (prefab == null)
@@ -126,14 +108,14 @@ namespace Wokarol.GameSystemsLocator
 #endif
 
     /// <summary>
-    /// Mark a class that will be instanced and used for configuring the Game Systems Locator
+    /// Defines a class that the bootstrapper will use to initialize Game Systems
     /// </summary>
     public interface ISystemConfiguration
     {
         /// <summary>
-        /// Run as the Game Systems Locator is bootrstrapped and should define types locator should expect 
+        /// Executed during bootstrapping, used to configure the Game Systems
         /// </summary>
-        /// <param name="builder">The builder providing method needed to configure the locator</param>
-        void Configure(GameSystems.ConfigurationBuilder builder);
+        /// <param name="builder">The builder providing methods needed to configure the locator</param>
+        void Configure(ServiceLocatorBuilder builder);
     }
 }
