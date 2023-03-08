@@ -80,11 +80,16 @@ else
 You can use Prefab Overrides to make this process nicer
 
 ## Changelog
+### v0.7.0
+- **Add:** Non-static Service Locator class
+- **Change:** Complete overhaul of the code architecture
+
+
 ### v0.6.0
 - **Add:** Option to disable bootstrapper
 - **Add:** Option to not spawn systems prefab
 - **Add:** SkipSystemsPrefab keyword
-- **Improve:** Game Systems API
+- **Change:** Game Systems API
 - **Fix:** Bootstrapper loads after the scene is loaded
 
 
