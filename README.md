@@ -50,6 +50,11 @@ If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Loca
 
 > For more information, refer to in-code documentation
 
+### Locating
+Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
+
+This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
+
 ### Overrides
 Game Systems can be overwritten, for that attach ` SystemOverrider ` component to the game object with game systems that should be used as children. Like shown on the example:
 
@@ -61,10 +66,18 @@ No additional configuration is needed
 
 > Currently enabling an overrider with ` Grab Systems From Children ` enabled loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit but I did not yet test it well enough to confirm that or deny
 
-### Locating
-Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
-
-This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
+## Can I?
+#### 1. Create an instance of service locator instead of using static Game Systems class?
+Yes, Service Locator is in ` GameSystemLocator.Core ` namespace
+#### 2. Spawn different prefab in debug and release?
+Yes, you can do so by changing the PrefabPath property in Config like
+```cs
+if (/* is debug */)
+    builder.PrefabPath = "Systems-Debug";
+else
+    builder.PrefabPath = "Systems";
+```
+You can use Prefab Overrides to make this process nicer
 
 ## Changelog
 ### v0.6.0
