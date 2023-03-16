@@ -79,7 +79,8 @@ else
 ```
 You can use Prefab Overrides to make this process nicer
 
-> Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed
+> ~~Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed~~  
+> *(Needs further investigation after v0.7.0)*
 
 ## Changelog
 ### v0.7.1
