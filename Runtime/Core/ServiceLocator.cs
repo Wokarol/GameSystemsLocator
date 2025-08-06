@@ -103,6 +103,35 @@ namespace Wokarol.GameSystemsLocator.Core
 
             return instance;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="callback"></param>
+        public void GetWhenReady<T>(Action<T> callback) where T : class => GetWhenReady(typeof(T), obj => callback((T)obj));
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="callback"></param>
+        public void GetWhenReady(Type type, Action<object> callback) // Consider adding a static-lambda-compatible override
+        {
+            AssertInitialization();
+
+            if (!systems.TryGetValue(type, out var boundSystem))
+                throw new InvalidOperationException("The type was not registered as the game system");
+
+            var instance = boundSystem.Instance;
+
+            if (boundSystem.HasInstanceBound)
+            {
+                callback(instance);
+                return;
+            }
+
+            boundSystem.WhenReadyCallbacks += callback;
+        }
 
         /// <summary>
         /// Applies system overrides to containers
@@ -126,7 +155,7 @@ namespace Wokarol.GameSystemsLocator.Core
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
-                            system.Value.BoundInstances.Add(s);
+                            system.Value.BindInstance(s);
                     }
                 }
             }
@@ -152,7 +181,7 @@ namespace Wokarol.GameSystemsLocator.Core
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
-                            system.Value.BoundInstances.Remove(s);
+                            system.Value.UnbindInstance(s);
                     }
                 }
             }
@@ -184,7 +213,7 @@ namespace Wokarol.GameSystemsLocator.Core
 
                 if (s != null)
                 {
-                    system.Value.BoundInstances.Add(s);
+                    system.Value.BindInstance(s);
                 }
                 else
                 {
@@ -206,7 +235,7 @@ namespace Wokarol.GameSystemsLocator.Core
 
                 if (s != null)
                 {
-                    system.Value.BoundInstances.Remove(s);
+                    system.Value.UnbindInstance(s);
                 }
             }
         }

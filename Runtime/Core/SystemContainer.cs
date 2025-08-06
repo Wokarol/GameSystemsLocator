@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Wokarol.GameSystemsLocator.Core
 {
@@ -8,7 +9,9 @@ namespace Wokarol.GameSystemsLocator.Core
     /// </summary>
     public class SystemContainer
     {
-        internal readonly List<object> BoundInstances = new List<object>();
+        private readonly List<object> boundInstances = new List<object>();
+
+        internal Action<object> WhenReadyCallbacks = null;
 
         public SystemContainer(object nullInstance, bool required, bool noOverride)
         {
@@ -20,7 +23,7 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <summary>
         /// List of instances bound to the container
         /// </summary>
-        public IReadOnlyList<object> Instances => BoundInstances;
+        public IReadOnlyList<object> Instances => boundInstances;
 
         /// <summary>
         /// Newest instance bound to the container, considered the main one
@@ -29,9 +32,9 @@ namespace Wokarol.GameSystemsLocator.Core
         {
             get
             {
-                var boundInstance = BoundInstances.Count == 0
+                var boundInstance = boundInstances.Count == 0
                     ? null
-                    : BoundInstances[BoundInstances.Count - 1];
+                    : boundInstances[boundInstances.Count - 1];
 
                 if (boundInstance == null) // TODO: Check if the null check performed here actually catches fake Unity nulls
                     return NullInstance;
@@ -57,5 +60,23 @@ namespace Wokarol.GameSystemsLocator.Core
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
         public readonly bool HasNoOverrides;
+
+        internal bool HasInstanceBound => boundInstances.Count > 0;
+
+        internal void BindInstance(object instance)
+        {
+            boundInstances.Add(instance);
+
+            if (WhenReadyCallbacks != null)
+            {
+                WhenReadyCallbacks(Instance);
+                WhenReadyCallbacks = null;
+            }
+        }
+
+        internal void UnbindInstance(object instance)
+        {
+            boundInstances.Remove(instance);
+        }
     }
 }

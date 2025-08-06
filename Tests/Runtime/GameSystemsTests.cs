@@ -561,6 +561,111 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
     }
 
+    public class GameSystemsTestOverridesStartingEmpty : GameSystemsTestsBase
+    {
+        [Test]
+        public void NotOverriten_ReturnsNull()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+            var bax = locator.Get<Bar>();
+
+            Assert.That(bax, Is.EqualTo(null));
+        }
+
+        [Test]
+        public void Overriten_AlreadyBound_GetWhenReadyCalledImmediately()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+            locator.ApplyOverride(holder);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+
+
+            Assert.That(bar, Is.EqualTo(createdBar));
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+            Assert.That(bar, Is.EqualTo(null));
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+
+            locator.ApplyOverride(holder);
+
+
+            Assert.That(bar, Is.EqualTo(createdBar));
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled_OnlyOnce()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+            Assert.That(bar, Is.EqualTo(null));
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+
+            locator.ApplyOverride(holder);
+            locator.RemoveOverride(holder);
+            locator.ApplyOverride(holder);
+
+
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+    }
+
 
     internal interface IBax { }
     internal class Bar : MonoBehaviour, IBax { }
