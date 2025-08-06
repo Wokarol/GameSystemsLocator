@@ -217,7 +217,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [Test]
-        public void Invalid_CannotAddSingletonTwice()
+        public void Invalid_CannotAddServiceTwice()
         {
             var systemsObject = new GameObject("Systems");
 
@@ -227,7 +227,33 @@ namespace Wokarol.GameSystemsLocator.Tests
                 s.Add<Foo>();
             }, systemsObject);
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
+        }
+
+        [Test]
+        public void Invalid_CannotGetServiceWhichDoesNotExist()
+        {
+            var systemsObject = new GameObject("Systems");
+            locator.Initialize(s =>
+            {
+            }, systemsObject);
+
+            TestDelegate action = () => locator.Get<Foo>();
+
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
+        }
+
+        [Test]
+        public void Invalid_CannotGetWhenReadyServiceWhichDoesNotExist()
+        {
+            var systemsObject = new GameObject("Systems");
+            locator.Initialize(s =>
+            {
+            }, systemsObject);
+
+            TestDelegate action = () => locator.GetWhenReady<Foo>(f => { });
+
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
         }
 
         [Test]

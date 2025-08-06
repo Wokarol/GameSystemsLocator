@@ -92,7 +92,7 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (!systems.TryGetValue(type, out var boundSystem))
-                throw new InvalidOperationException("The type was not registered as the game system");
+                throw new InvalidOperationException($"{type.Name} was not registered as the game system");
 
             var instance = boundSystem.Instance;
 
@@ -120,7 +120,7 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (!systems.TryGetValue(type, out var boundSystem))
-                throw new InvalidOperationException("The type was not registered as the game system");
+                throw new InvalidOperationException($"{type.Name} was not registered as the game system");
 
             var instance = boundSystem.Instance;
 
@@ -190,7 +190,7 @@ namespace Wokarol.GameSystemsLocator.Core
         internal void Add(Type type, object nullObject, bool required, bool noOverride = false)
         {
             if (systems.ContainsKey(type))
-                throw new InvalidOperationException("The system type can only be registered once");
+                throw new InvalidOperationException($"The system type can only be registered once ({type.Name})");
 
             systems[type] = new SystemContainer(nullObject, required, noOverride);
         }
