@@ -41,7 +41,10 @@ public class GameConfig : ISystemConfiguration
 }
 ```
 
-If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Locator with the systems present on the prefab. Prefab is loaded before scene is loaded.
+If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Locator with the systems present on the prefab. Prefab is loaded before scene is loaded.  
+If the ` PrefabPath ` points to a folder, all the prefabs in that folder will be spawned underneath the main prefab. Or underneath a fresh game object if no main prefab is present.
+
+If the ` PrefabPath ` has more than one entry, all present path will also be checked and all found prefabs will be spawned under the main prefab.
 
 > For test scenes, you can add ` SkipSystemsPrefab ` to the name to not load the systems prefab. Locator will still be configured.  
 > (when using additive scenes, all loaded scenes need that keyword otherwise systems prefab is spawned)
@@ -55,6 +58,8 @@ Locator configured like so can then be used to obtain references to game system 
 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
+You can also use ` GetWhenReady ` which accepts a callback which is called either immediately or when a system is added (Null Objects do not count). Ensure the object lives long enough to see the systems getting ready. Otherwise it might leave a dangling class reference in delegate.
+
 ### Overrides
 Game Systems can be overwritten, for that attach ` SystemOverrider ` component to the game object with game systems that should be used as children. Like shown on the example:
 
@@ -64,12 +69,12 @@ No additional configuration is needed
 
 > You can also pass the systems in a list directly, this will call ` GetComponent ` on them to retrieve a system.
 
-> Currently enabling an overrider with ` Grab Systems From Children ` enabled loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit but I did not yet test it well enough to confirm that or deny
+> Currently enabling an overrider with ` Grab Systems From Children ` enabled loops over all systems calling ` GetComponentInChildren ` which might cause a performance hit. If you want to avoid it for systems that will never be overwritten. Use the ` noOverrides ` flag for a given system during locator setup.
 
 ## Can I?
 #### 1. Create an instance of service locator instead of using static Game Systems class?
 Yes, Service Locator is in ` GameSystemLocator.Core ` namespace
-#### 2. Spawn different prefab in debug and release?
+#### 2. Spawn different prefab(s) in debug and release?
 Yes, you can do so by changing the PrefabPath property in Config like
 ```cs
 if (/* is debug */)
@@ -77,12 +82,25 @@ if (/* is debug */)
 else
     builder.PrefabPath = "Systems";
 ```
-You can use Prefab Overrides to make this process nicer
+You can use Prefab Overrides to make this process nicer.
+Or you can do it by adding a target specific prefabs next to the main one.
+```cs
+builder.PrefabPath = "Systems";
 
-> ~~Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed~~  
-> *(Needs further investigation after v0.7.0)*
+if (/* is debug */)
+    builder.PrefabPaths.Add("Systems-Debug");
+else
+    builder.PrefabPaths.Add("Systems-Release");
+```
 
 ## Changelog
+### v0.8.0
+- **Add:** noOverride flag
+- **Add:** createIfNotPresent flag
+- **Add:** Setup System Locator tool
+- **Add:** GetWhenReady
+- **Fix:** Add missing type info to exceptions
+
 ### v0.7.1
 - **Fix:** Systems prefab being removed after creation
 
