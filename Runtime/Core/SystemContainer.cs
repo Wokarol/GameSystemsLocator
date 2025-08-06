@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Wokarol.GameSystemsLocator.Core
 {
@@ -8,18 +9,22 @@ namespace Wokarol.GameSystemsLocator.Core
     /// </summary>
     public class SystemContainer
     {
-        internal readonly List<object> BoundInstances = new List<object>();
+        private readonly List<object> boundInstances = new List<object>();
 
-        public SystemContainer(object nullInstance, bool required)
+        internal Action<object> WhenReadyCallbacks = null;
+
+        public SystemContainer(object nullInstance, bool required, bool noOverride, bool createIfNotPresent)
         {
             NullInstance = nullInstance;
             Required = required;
+            HasNoOverrides = noOverride;
+            CreateIfNotPresent = createIfNotPresent;
         }
 
         /// <summary>
         /// List of instances bound to the container
         /// </summary>
-        public IReadOnlyList<object> Instances => BoundInstances;
+        public IReadOnlyList<object> Instances => boundInstances;
 
         /// <summary>
         /// Newest instance bound to the container, considered the main one
@@ -28,11 +33,11 @@ namespace Wokarol.GameSystemsLocator.Core
         {
             get
             {
-                var boundInstance = BoundInstances.Count == 0
+                var boundInstance = boundInstances.Count == 0
                     ? null
-                    : BoundInstances[BoundInstances.Count - 1];
+                    : boundInstances[boundInstances.Count - 1];
 
-                if (boundInstance == null) // <- Check if the null check performed here actually catches fake Unity nulls
+                if (boundInstance == null) // TODO: Check if the null check performed here actually catches fake Unity nulls
                     return NullInstance;
 
                 return boundInstance;
@@ -50,5 +55,34 @@ namespace Wokarol.GameSystemsLocator.Core
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
         public readonly bool Required;
+
+        /// <summary>
+        /// Defines if this system can have overrides or if the instance is only present in the root
+        /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
+        /// </summary>
+        public readonly bool HasNoOverrides;
+
+        /// <summary>
+        /// If set, signals to the bootstrapper than an instance of a system should be created during bootstrapping
+        /// </summary>
+        public readonly bool CreateIfNotPresent;
+
+        internal bool HasInstanceBound => boundInstances.Count > 0;
+
+        internal void BindInstance(object instance)
+        {
+            boundInstances.Add(instance);
+
+            if (WhenReadyCallbacks != null)
+            {
+                WhenReadyCallbacks(Instance);
+                WhenReadyCallbacks = null;
+            }
+        }
+
+        internal void UnbindInstance(object instance)
+        {
+            boundInstances.Remove(instance);
+        }
     }
 }

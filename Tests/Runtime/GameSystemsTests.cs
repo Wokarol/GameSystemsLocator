@@ -217,7 +217,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
 
         [Test]
-        public void Invalid_CannotAddSingletonTwice()
+        public void Invalid_CannotAddServiceTwice()
         {
             var systemsObject = new GameObject("Systems");
 
@@ -227,7 +227,33 @@ namespace Wokarol.GameSystemsLocator.Tests
                 s.Add<Foo>();
             }, systemsObject);
 
-            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>());
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
+        }
+
+        [Test]
+        public void Invalid_CannotGetServiceWhichDoesNotExist()
+        {
+            var systemsObject = new GameObject("Systems");
+            locator.Initialize(s =>
+            {
+            }, systemsObject);
+
+            TestDelegate action = () => locator.Get<Foo>();
+
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
+        }
+
+        [Test]
+        public void Invalid_CannotGetWhenReadyServiceWhichDoesNotExist()
+        {
+            var systemsObject = new GameObject("Systems");
+            locator.Initialize(s =>
+            {
+            }, systemsObject);
+
+            TestDelegate action = () => locator.GetWhenReady<Foo>(f => { });
+
+            Assert.That(action, Throws.Exception.TypeOf<InvalidOperationException>().And.Message.Contains("Foo"));
         }
 
         [Test]
@@ -512,6 +538,160 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
     }
 
+    public class GameSystemsTestOverridesWithNoOverridesFlag : GameSystemsTestsBase
+    {
+        private Bar baseBar;
+
+        [SetUp]
+        public void SetupBaseSystems()
+        {
+            var systemsObject = new GameObject("Systems");
+            baseBar = AddTestSystem<Bar>(systemsObject);
+
+            locator.Initialize(s =>
+            {
+                s.Add<IBax>(noOverride: true);
+            }, systemsObject);
+        }
+
+        [Test]
+        public void NotOverriten_ReturnsBase()
+        {
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            locator.ApplyOverride(holder);
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_WithoutHolder_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            locator.ApplyOverride(null, new List<GameObject>() { betterBar.gameObject });
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+    }
+
+    public class GameSystemsTestOverridesStartingEmpty : GameSystemsTestsBase
+    {
+        [Test]
+        public void NotOverriten_ReturnsNull()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+            var bax = locator.Get<Bar>();
+
+            Assert.That(bax, Is.EqualTo(null));
+        }
+
+        [Test]
+        public void Overriten_AlreadyBound_GetWhenReadyCalledImmediately()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+            locator.ApplyOverride(holder);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+
+
+            Assert.That(bar, Is.EqualTo(createdBar));
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+            Assert.That(bar, Is.EqualTo(null));
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+
+            locator.ApplyOverride(holder);
+
+
+            Assert.That(bar, Is.EqualTo(createdBar));
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled_OnlyOnce()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Bar>();
+            }, b => null);
+
+
+            Bar bar = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<Bar>(b =>
+            {
+                bar = b;
+                callbackCallCount++;
+            });
+
+            Assert.That(bar, Is.EqualTo(null));
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+
+            locator.ApplyOverride(holder);
+            locator.RemoveOverride(holder);
+            locator.ApplyOverride(holder);
+
+
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+    }
+
 
     internal interface IBax { }
     internal class Bar : MonoBehaviour, IBax { }
@@ -531,7 +711,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
         protected static T AddTestSystem<T>(GameObject systemsObject) where T : Component
         {
-            var foo = new GameObject("Foo").AddComponent<T>();
+            var foo = new GameObject(typeof(T).Name).AddComponent<T>();
             foo.transform.SetParent(systemsObject.transform);
             return foo;
         }

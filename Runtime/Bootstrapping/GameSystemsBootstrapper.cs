@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -78,15 +79,61 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
 
         private static GameObject CreateSystems(GameObject temporaryHolder, ServiceLocatorBuilder builder)
         {
-            var prefab = Resources.Load<GameObject>(builder.PrefabPath);
-            if (prefab == null)
+            var root = ConstructGameObjectForPrefabPath(temporaryHolder, builder.PrefabPath);
+
+            for (int i = 0; i < builder.PrefabPaths.Count; i++)
             {
-                throw new InvalidOperationException($"There is no prefab in Resources at \"{builder.PrefabPath}\". Make sure the prefab name is typed correctly");
+                ConstructGameObjectForPrefabPath(root, builder.PrefabPaths[i]);
             }
 
-            var systemsObject = UnityEngine.Object.Instantiate(prefab, temporaryHolder.transform);
-            systemsObject.name = prefab.name;
-            return systemsObject;
+            return root;
+        }
+
+        private static GameObject ConstructGameObjectForPrefabPath(GameObject parent, string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                var obj = new GameObject("Systems");
+                obj.transform.SetParent(parent.transform);
+
+                return obj;
+            }
+
+            // We get both one and All in case the path points at a folder
+            var prefab = Resources.Load<GameObject>(path);
+            var prefabs = Resources.LoadAll<GameObject>(path);
+
+            if (prefab == null && prefabs.Length == 0)
+            {
+                throw new InvalidOperationException($"There is no prefab/folder in Resources at \"{path}\". Make sure the path is typed correctly");
+            }
+
+            GameObject rootSystemsObject;
+
+            if (prefab != null)
+            {
+                rootSystemsObject = UnityEngine.Object.Instantiate(prefab, parent.transform);
+                rootSystemsObject.name = prefab.name;
+            }
+            else
+            {
+                // If there's no "main" prefab, then spawn an empty holder with a name of the folder
+                rootSystemsObject = new GameObject(Path.GetFileName(path));
+                rootSystemsObject.transform.SetParent(parent.transform);
+            }
+
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                if (prefabs[i] != prefab)
+                {
+                    var systemsObject = UnityEngine.Object.Instantiate(prefabs[i], parent.transform);
+                    systemsObject.name = prefabs[i].name;
+
+                    systemsObject.transform.SetParent(rootSystemsObject.transform);
+                }
+            }
+
+            return rootSystemsObject;
         }
 
         private static ISystemConfiguration GetConfigurator()
