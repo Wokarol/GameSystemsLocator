@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Wokarol.GameSystemsLocator.Core
 {
@@ -13,7 +14,10 @@ namespace Wokarol.GameSystemsLocator.Core
         /// Path to the prefab that should be spawned as the Game Systems root
         /// </summary>
         public string PrefabPath { get; set; }
-        public bool IsSystemPrefabSet => !String.IsNullOrEmpty(PrefabPath);
+        public List<string> PrefabPaths { get; } = new List<string>();
+
+        public bool IsSystemPrefabSet => !String.IsNullOrEmpty(PrefabPath) || PrefabPaths.Count > 0;
+
 
         public ServiceLocatorBuilder(ServiceLocator locator)
         {
@@ -27,9 +31,10 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <param name="nullObject">Optional null object to return when no instance is found</param>
         /// <param name="required">Optional flag enabling additional checks and warnings to make sure there is always an instance bound to the container</param>
         /// <param name="noOverride">Optional flag, disabled checking for overrides of that system</param>
-        public void Add<T>(T nullObject = null, bool required = false, bool noOverride = false) where T : class
+        /// <param name="createIfNotPresent">Optional flag, if enabled will ensure the system is created during bootstrapping</param>
+        public void Add<T>(T nullObject = null, bool required = false, bool noOverride = false, bool createIfNotPresent = false) where T : class
         {
-            Add(typeof(T), nullObject, required, noOverride);
+            Add(typeof(T), nullObject, required, noOverride, createIfNotPresent);
         }
 
         /// <summary>
@@ -39,9 +44,10 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <param name="nullObject">Optional null object to return when no instance is found</param>
         /// <param name="required">Optional flag enabling additional checks and warnings to make sure there is always an instance bound to the container</param>
         /// <param name="sealed">Optional flag, disabled checking for overrides of that system</param>
-        public void Add(Type type, object nullObject, bool required = false, bool noOverride = false)
+        /// <param name="createIfNotPresent">Optional flag, if enabled will ensure the system is created during bootstrapping</param>
+        public void Add(Type type, object nullObject, bool required = false, bool noOverride = false, bool createIfNotPresent = false)
         {
-            locator.Add(type, nullObject, required, noOverride);
+            locator.Add(type, nullObject, required, noOverride, createIfNotPresent);
         }
     }
 }

@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Wokarol.GameSystemsLocator.Core
@@ -20,6 +21,7 @@ namespace Wokarol.GameSystemsLocator.Core
         /// </summary>
         /// <param name="configCallback">Method called to configure the locator</param>
         /// <param name="systemsRoot">Game Object with systems to bind upon initialization</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, GameObject systemsRoot = null) => Initialize(configCallback, b => systemsRoot);
 
         /// <summary>
@@ -37,9 +39,32 @@ namespace Wokarol.GameSystemsLocator.Core
             configCallback(builder);
 
             var root = createSystemsRoot(builder);
-            if (root != null) BindSystemsFromObject(root);
+            if (root != null)
+            {
+                BindSystemsFromObject(root);
+                CreateSystemThatAreNotPresent(root);
+            }
+            else
+            {
+                var count = Systems.Count((system) => (system.Value.CreateIfNotPresent && system.Value.Instance == null));
+                Debug.LogWarning($"{count} systems with createIfNotPresent but no system root was provided. Therefore those systems will not be created");
+            }
 
             isInitialized = true;
+        }
+
+        private void CreateSystemThatAreNotPresent(GameObject root)
+        {
+            foreach (var system in Systems)
+            {
+                if (system.Value.CreateIfNotPresent && system.Value.Instance == null)
+                {
+                    var systemHost = new GameObject(Regex.Replace(system.Key.Name, @"([a-z])([A-Z])", @"$1 $2"));
+                    systemHost.transform.SetParent(root.transform);
+
+                    system.Value.BindInstance(systemHost.AddComponent(system.Key));
+                }
+            }
         }
 
         /// <summary>
@@ -187,12 +212,12 @@ namespace Wokarol.GameSystemsLocator.Core
             }
         }
 
-        internal void Add(Type type, object nullObject, bool required, bool noOverride = false)
+        internal void Add(Type type, object nullObject, bool required, bool noOverride = false, bool createIfNotPresent = false)
         {
             if (systems.ContainsKey(type))
                 throw new InvalidOperationException($"The system type can only be registered once ({type.Name})");
 
-            systems[type] = new SystemContainer(nullObject, required, noOverride);
+            systems[type] = new SystemContainer(nullObject, required, noOverride, createIfNotPresent);
         }
 
         private void AssertInitialization()

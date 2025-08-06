@@ -13,11 +13,12 @@ namespace Wokarol.GameSystemsLocator.Core
 
         internal Action<object> WhenReadyCallbacks = null;
 
-        public SystemContainer(object nullInstance, bool required, bool noOverride)
+        public SystemContainer(object nullInstance, bool required, bool noOverride, bool createIfNotPresent)
         {
             NullInstance = nullInstance;
             Required = required;
             HasNoOverrides = noOverride;
+            CreateIfNotPresent = createIfNotPresent;
         }
 
         /// <summary>
@@ -60,6 +61,11 @@ namespace Wokarol.GameSystemsLocator.Core
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
         public readonly bool HasNoOverrides;
+
+        /// <summary>
+        /// If set, signals to the bootstrapper than an instance of a system should be created during bootstrapping
+        /// </summary>
+        public readonly bool CreateIfNotPresent;
 
         internal bool HasInstanceBound => boundInstances.Count > 0;
 
