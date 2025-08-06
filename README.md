@@ -30,7 +30,7 @@ Example of such class might look like so:
 ```cs
 public class GameConfig : ISystemConfiguration
 {
-    public void Configure(GameSystems.ConfigurationBuilder builder)
+    public void Configure(ServiceLocatorBuilder builder)
     {
         builder.PrefabPath = "Systems";
 
@@ -51,7 +51,7 @@ If the ` PrefabPath ` is set, bootstrapper will spawn it and initialize the Loca
 > For more information, refer to in-code documentation
 
 ### Locating
-Locator configured like so can then be used to obtain references to game system using ` GameSystem.Get<IMusicSource>().Play() ` at any point in code
+Locator configured like so can then be used to obtain references to game system using ` GameSystems.Get<IMusicSource>().Play() ` at any point in code
 
 This method will get the current system even including the overrides, if no instance is present, it will attempt to return the null object.
 
@@ -78,6 +78,9 @@ else
     builder.PrefabPath = "Systems";
 ```
 You can use Prefab Overrides to make this process nicer
+
+> ~~Currently, getting the system in ` Enable() ` at the beginning of the application lifetime (when entering game mode for example) will almost always lead to an exception. Considering using ` Start() ` or calling the method right before the system is needed~~  
+> *(Needs further investigation after v0.7.0)*
 
 ## Changelog
 ### v0.7.1
