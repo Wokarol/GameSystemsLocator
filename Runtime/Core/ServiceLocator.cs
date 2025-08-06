@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Wokarol.GameSystemsLocator.Core
@@ -20,6 +21,7 @@ namespace Wokarol.GameSystemsLocator.Core
         /// </summary>
         /// <param name="configCallback">Method called to configure the locator</param>
         /// <param name="systemsRoot">Game Object with systems to bind upon initialization</param>
+        /// <exception cref="InvalidOperationException"></exception>
         public void Initialize(Action<ServiceLocatorBuilder> configCallback, GameObject systemsRoot = null) => Initialize(configCallback, b => systemsRoot);
 
         /// <summary>
@@ -37,9 +39,32 @@ namespace Wokarol.GameSystemsLocator.Core
             configCallback(builder);
 
             var root = createSystemsRoot(builder);
-            if (root != null) BindSystemsFromObject(root);
+            if (root != null)
+            {
+                BindSystemsFromObject(root);
+                CreateSystemThatAreNotPresent(root);
+            }
+            else
+            {
+                var count = Systems.Count((system) => (system.Value.CreateIfNotPresent && system.Value.Instance == null));
+                Debug.LogWarning($"{count} systems with createIfNotPresent but no system root was provided. Therefore those systems will not be created");
+            }
 
             isInitialized = true;
+        }
+
+        private void CreateSystemThatAreNotPresent(GameObject root)
+        {
+            foreach (var system in Systems)
+            {
+                if (system.Value.CreateIfNotPresent && system.Value.Instance == null)
+                {
+                    var systemHost = new GameObject(Regex.Replace(system.Key.Name, @"([a-z])([A-Z])", @"$1 $2"));
+                    systemHost.transform.SetParent(root.transform);
+
+                    system.Value.BindInstance(systemHost.AddComponent(system.Key));
+                }
+            }
         }
 
         /// <summary>
@@ -92,7 +117,7 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (!systems.TryGetValue(type, out var boundSystem))
-                throw new InvalidOperationException("The type was not registered as the game system");
+                throw new InvalidOperationException($"{type.Name} was not registered as the game system");
 
             var instance = boundSystem.Instance;
 
@@ -102,6 +127,35 @@ namespace Wokarol.GameSystemsLocator.Core
             }
 
             return instance;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="callback"></param>
+        public void GetWhenReady<T>(Action<T> callback) where T : class => GetWhenReady(typeof(T), obj => callback((T)obj));
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="callback"></param>
+        public void GetWhenReady(Type type, Action<object> callback) // Consider adding a static-lambda-compatible override
+        {
+            AssertInitialization();
+
+            if (!systems.TryGetValue(type, out var boundSystem))
+                throw new InvalidOperationException($"{type.Name} was not registered as the game system");
+
+            var instance = boundSystem.Instance;
+
+            if (boundSystem.HasInstanceBound)
+            {
+                callback(instance);
+                return;
+            }
+
+            boundSystem.WhenReadyCallbacks += callback;
         }
 
         /// <summary>
@@ -114,16 +168,21 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (holder != null)
-                BindSystemsFromObject(holder, false);
+                BindSystemsFromObject(holder, false, true);
 
             if (overrides != null)
             {
                 foreach (var system in Systems)
+                {
+                    if (system.Value.HasNoOverrides)
+                        continue;
+
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
-                            system.Value.BoundInstances.Add(s);
+                            system.Value.BindInstance(s);
                     }
+                }
             }
         }
 
@@ -140,20 +199,25 @@ namespace Wokarol.GameSystemsLocator.Core
             if (overrides != null)
             {
                 foreach (var system in Systems)
+                {
+                    if (system.Value.HasNoOverrides)
+                        continue;
+
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
-                            system.Value.BoundInstances.Remove(s);
+                            system.Value.UnbindInstance(s);
                     }
+                }
             }
         }
 
-        internal void Add(Type type, object nullObject, bool required)
+        internal void Add(Type type, object nullObject, bool required, bool noOverride = false, bool createIfNotPresent = false)
         {
             if (systems.ContainsKey(type))
-                throw new InvalidOperationException("The system type can only be registered once");
+                throw new InvalidOperationException($"The system type can only be registered once ({type.Name})");
 
-            systems[type] = new SystemContainer(nullObject, required);
+            systems[type] = new SystemContainer(nullObject, required, noOverride, createIfNotPresent);
         }
 
         private void AssertInitialization()
@@ -162,15 +226,19 @@ namespace Wokarol.GameSystemsLocator.Core
                 throw new InvalidOperationException("Service Locator is not yet initialized, cannot perform the operation");
         }
 
-        private void BindSystemsFromObject(GameObject rootObject, bool errorOnRequired = true)
+        private void BindSystemsFromObject(GameObject rootObject, bool errorOnRequired = true, bool isOverriding = false)
         {
             foreach (var system in systems)
             {
+                // We skip doing a get component and all that for non overridable systems
+                if (isOverriding && system.Value.HasNoOverrides)
+                    continue;
+
                 var s = rootObject.GetComponentInChildren(system.Key, true);
 
                 if (s != null)
                 {
-                    system.Value.BoundInstances.Add(s);
+                    system.Value.BindInstance(s);
                 }
                 else
                 {
@@ -180,15 +248,19 @@ namespace Wokarol.GameSystemsLocator.Core
             }
         }
 
-        private void RemoveSystemsFromObject(GameObject rootObject)
+        private void RemoveSystemsFromObject(GameObject rootObject, bool isOverriding = false)
         {
             foreach (var system in systems)
             {
+                // We skip doing a get component and all that for non overridable systems
+                if (isOverriding && system.Value.HasNoOverrides)
+                    continue;
+
                 var s = rootObject.GetComponentInChildren(system.Key, true);
 
                 if (s != null)
                 {
-                    system.Value.BoundInstances.Remove(s);
+                    system.Value.UnbindInstance(s);
                 }
             }
         }
