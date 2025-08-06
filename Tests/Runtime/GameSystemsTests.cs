@@ -512,6 +512,55 @@ namespace Wokarol.GameSystemsLocator.Tests
         }
     }
 
+    public class GameSystemsTestOverridesWithNoOverridesFlag : GameSystemsTestsBase
+    {
+        private Bar baseBar;
+
+        [SetUp]
+        public void SetupBaseSystems()
+        {
+            var systemsObject = new GameObject("Systems");
+            baseBar = AddTestSystem<Bar>(systemsObject);
+
+            locator.Initialize(s =>
+            {
+                s.Add<IBax>(noOverride: true);
+            }, systemsObject);
+        }
+
+        [Test]
+        public void NotOverriten_ReturnsBase()
+        {
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            locator.ApplyOverride(holder);
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+
+        [Test]
+        public void Overriten_WithoutHolder_ReturnsBase()
+        {
+            var holder = new GameObject("Better Systems");
+            var betterBar = AddTestSystem<BetterBar>(holder);
+
+            locator.ApplyOverride(null, new List<GameObject>() { betterBar.gameObject });
+            var bax = locator.Get<IBax>();
+
+            Assert.That(bax, Is.EqualTo(baseBar));
+        }
+    }
+
 
     internal interface IBax { }
     internal class Bar : MonoBehaviour, IBax { }
@@ -531,7 +580,7 @@ namespace Wokarol.GameSystemsLocator.Tests
 
         protected static T AddTestSystem<T>(GameObject systemsObject) where T : Component
         {
-            var foo = new GameObject("Foo").AddComponent<T>();
+            var foo = new GameObject(typeof(T).Name).AddComponent<T>();
             foo.transform.SetParent(systemsObject.transform);
             return foo;
         }

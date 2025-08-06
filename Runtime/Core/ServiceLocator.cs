@@ -114,16 +114,21 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (holder != null)
-                BindSystemsFromObject(holder, false);
+                BindSystemsFromObject(holder, false, true);
 
             if (overrides != null)
             {
                 foreach (var system in Systems)
+                {
+                    if (system.Value.HasNoOverrides)
+                        continue;
+
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
                             system.Value.BoundInstances.Add(s);
                     }
+                }
             }
         }
 
@@ -140,20 +145,25 @@ namespace Wokarol.GameSystemsLocator.Core
             if (overrides != null)
             {
                 foreach (var system in Systems)
+                {
+                    if (system.Value.HasNoOverrides)
+                        continue;
+
                     foreach (var obj in overrides)
                     {
                         if (obj.TryGetComponent(system.Key, out var s))
                             system.Value.BoundInstances.Remove(s);
                     }
+                }
             }
         }
 
-        internal void Add(Type type, object nullObject, bool required)
+        internal void Add(Type type, object nullObject, bool required, bool noOverride = false)
         {
             if (systems.ContainsKey(type))
                 throw new InvalidOperationException("The system type can only be registered once");
 
-            systems[type] = new SystemContainer(nullObject, required);
+            systems[type] = new SystemContainer(nullObject, required, noOverride);
         }
 
         private void AssertInitialization()
@@ -162,10 +172,14 @@ namespace Wokarol.GameSystemsLocator.Core
                 throw new InvalidOperationException("Service Locator is not yet initialized, cannot perform the operation");
         }
 
-        private void BindSystemsFromObject(GameObject rootObject, bool errorOnRequired = true)
+        private void BindSystemsFromObject(GameObject rootObject, bool errorOnRequired = true, bool isOverriding = false)
         {
             foreach (var system in systems)
             {
+                // We skip doing a get component and all that for non overridable systems
+                if (isOverriding && system.Value.HasNoOverrides)
+                    continue;
+
                 var s = rootObject.GetComponentInChildren(system.Key, true);
 
                 if (s != null)
@@ -180,10 +194,14 @@ namespace Wokarol.GameSystemsLocator.Core
             }
         }
 
-        private void RemoveSystemsFromObject(GameObject rootObject)
+        private void RemoveSystemsFromObject(GameObject rootObject, bool isOverriding = false)
         {
             foreach (var system in systems)
             {
+                // We skip doing a get component and all that for non overridable systems
+                if (isOverriding && system.Value.HasNoOverrides)
+                    continue;
+
                 var s = rootObject.GetComponentInChildren(system.Key, true);
 
                 if (s != null)

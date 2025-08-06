@@ -26,9 +26,10 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <typeparam name="T">Type of the service</typeparam>
         /// <param name="nullObject">Optional null object to return when no instance is found</param>
         /// <param name="required">Optional flag enabling additional checks and warnings to make sure there is always an instance bound to the container</param>
-        public void Add<T>(T nullObject = null, bool required = false) where T : class
+        /// <param name="noOverride">Optional flag, disabled checking for overrides of that system</param>
+        public void Add<T>(T nullObject = null, bool required = false, bool noOverride = false) where T : class
         {
-            Add(typeof(T), nullObject, required);
+            Add(typeof(T), nullObject, required, noOverride);
         }
 
         /// <summary>
@@ -37,9 +38,10 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <param name="type">Type of the service</typeparam>
         /// <param name="nullObject">Optional null object to return when no instance is found</param>
         /// <param name="required">Optional flag enabling additional checks and warnings to make sure there is always an instance bound to the container</param>
-        public void Add(Type type, object nullObject, bool required = false)
+        /// <param name="sealed">Optional flag, disabled checking for overrides of that system</param>
+        public void Add(Type type, object nullObject, bool required = false, bool noOverride = false)
         {
-            locator.Add(type, nullObject, required);
+            locator.Add(type, nullObject, required, noOverride);
         }
     }
 }

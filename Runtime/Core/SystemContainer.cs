@@ -10,10 +10,11 @@ namespace Wokarol.GameSystemsLocator.Core
     {
         internal readonly List<object> BoundInstances = new List<object>();
 
-        public SystemContainer(object nullInstance, bool required)
+        public SystemContainer(object nullInstance, bool required, bool noOverride)
         {
             NullInstance = nullInstance;
             Required = required;
+            HasNoOverrides = noOverride;
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace Wokarol.GameSystemsLocator.Core
                     ? null
                     : BoundInstances[BoundInstances.Count - 1];
 
-                if (boundInstance == null) // <- Check if the null check performed here actually catches fake Unity nulls
+                if (boundInstance == null) // TODO: Check if the null check performed here actually catches fake Unity nulls
                     return NullInstance;
 
                 return boundInstance;
@@ -50,5 +51,11 @@ namespace Wokarol.GameSystemsLocator.Core
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
         /// </summary>
         public readonly bool Required;
+
+        /// <summary>
+        /// Defines if this system can have overrides or if the instance is only present in the root
+        /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
+        /// </summary>
+        public readonly bool HasNoOverrides;
     }
 }
