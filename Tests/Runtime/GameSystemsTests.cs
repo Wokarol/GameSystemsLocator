@@ -1,7 +1,8 @@
+using NUnit.Framework;
+using NUnit.Framework.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using UnityEngine;
 using Wokarol.GameSystemsLocator.Core;
 
@@ -30,8 +31,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_BoundSystem_ReturnsNull()
         {
-            var systemsObject = new GameObject("Systems");
-
             locator.Initialize(s =>
             {
                 s.Add<Foo>();
@@ -44,8 +43,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_BoundSystem_WithTry_ReturnsFalse()
         {
-            var systemsObject = new GameObject("Systems");
-
             locator.Initialize(s =>
             {
                 s.Add<Foo>();
@@ -63,8 +60,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_BoundSystem_WithTry_NotGeneric_ReturnsFalse()
         {
-            var systemsObject = new GameObject("Systems");
-
             locator.Initialize(s =>
             {
                 s.Add<Foo>();
@@ -82,7 +77,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_LocatesBoundSingleton()
         {
-            var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
             locator.Initialize(s =>
@@ -106,7 +100,6 @@ namespace Wokarol.GameSystemsLocator.Tests
             }, 
             b =>
             {
-                var systemsObject = new GameObject("Systems");
                 foo = AddTestSystem<Foo>(systemsObject);
                 return systemsObject;
             });
@@ -119,7 +112,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_LocatesBoundSingleton_WithTry()
         {
-            var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
             locator.Initialize(s =>
@@ -140,7 +132,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_LocatesBoundSingleton_NonGeneric()
         {
-            var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
             locator.Initialize(s =>
@@ -155,7 +146,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_LocatesBoundSingleton_AsInterface()
         {
-            var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
 
             locator.Initialize(s =>
@@ -170,7 +160,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_ReturnsNullObject_WhenDefined()
         {
-            var systemsObject = new GameObject("Systems");
 
             var nullBax = new NullBax();
 
@@ -186,7 +175,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_ReturnsInstance_EvenIf_NullObjectWhenDefined()
         {
-            var systemsObject = new GameObject("Systems");
             var bar = AddTestSystem<Bar>(systemsObject);
 
             var nullBax = new NullBax();
@@ -203,7 +191,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Initialized_WithRoot_LocatesOnlyCreatedSingletons()
         {
-            var systemsObject = new GameObject("Systems");
             var foo = AddTestSystem<Foo>(systemsObject);
 
             locator.Initialize(s =>
@@ -219,8 +206,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Invalid_CannotAddServiceTwice()
         {
-            var systemsObject = new GameObject("Systems");
-
             TestDelegate action = () => locator.Initialize(s =>
             {
                 s.Add<Foo>();
@@ -233,7 +218,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Invalid_CannotGetServiceWhichDoesNotExist()
         {
-            var systemsObject = new GameObject("Systems");
             locator.Initialize(s =>
             {
             }, systemsObject);
@@ -246,7 +230,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Invalid_CannotGetWhenReadyServiceWhichDoesNotExist()
         {
-            var systemsObject = new GameObject("Systems");
             locator.Initialize(s =>
             {
             }, systemsObject);
@@ -305,6 +288,21 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             Assert.That(action, Throws.Nothing);
         }
+
+        [Test]
+        public void Initialized_CreatesSystemIfNotPresent()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Foo>(createIfNotPresent: true);
+            }, systemsObject);
+
+            var wasFooFound = locator.TryGet<Foo>(out var foundFoo);
+
+            Assert.That(wasFooFound, Is.True);
+            Assert.That(foundFoo.GetType(), Is.EqualTo(typeof(Foo)));
+        }
+
     }
 
     public class GameSystemsTestLogging : GameSystemsTestsBase
@@ -336,8 +334,6 @@ namespace Wokarol.GameSystemsLocator.Tests
         [Test]
         public void Invalid_RequiredSingletons_HaveToBePresent()
         {
-            var systemsObject = new GameObject("Systems");
-
             locator.Initialize(s =>
             {
                 s.Add<Foo>(required: true);
@@ -345,6 +341,43 @@ namespace Wokarol.GameSystemsLocator.Tests
 
             Assert.That(logger.Errors, Has.Count.EqualTo(1));
             Assert.That(logger.Errors[0], Does.Match(".* binding.* required.*"));
+        }
+
+        [Test]
+        public void Initialized_NoRoot_DoesNotWarnWhenNoCreateIfNotPresentIsSet()
+        {
+            locator.Initialize(s =>
+            {
+            });
+
+            Assert.That(logger.Warnings, Has.Count.EqualTo(0));
+        }
+
+        [Test]
+        public void Initialized_NoRoot_WarnsWhenCreateIfNotPresentIsSet()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Foo>(createIfNotPresent: true);
+            });
+
+            Assert.That(logger.Warnings, Has.Count.EqualTo(1));
+            Assert.That(logger.Warnings[0], Does.Match(".*no system root was provided.*will not be created.*"));
+        }
+
+        [Test]
+        public void Initialized_CreatesSystemIfNotPresent_WhenRequired_WithNoError()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<Foo>(required: true, createIfNotPresent: true);
+            }, systemsObject);
+
+            var wasFooFound = locator.TryGet<Foo>(out var foundFoo);
+
+            Assert.That(logger.Errors, Has.Count.EqualTo(0));
+            Assert.That(wasFooFound, Is.True);
+            Assert.That(foundFoo.GetType(), Is.EqualTo(typeof(Foo)));
         }
     }
 
@@ -701,12 +734,27 @@ namespace Wokarol.GameSystemsLocator.Tests
 
     public class GameSystemsTestsBase
     {
+        /// <summary>
+        /// Blank Service Locator for testing
+        /// </summary>
         protected ServiceLocator locator;
+
+        /// <summary>
+        /// Blank game object to act as a root when needed
+        /// </summary>
+        protected GameObject systemsObject;
 
         [SetUp]
         public void Setup()
         {
             locator = new ServiceLocator();
+            systemsObject = new GameObject("Systems");
+        }
+
+        [TearDown]
+        public void Teardown()
+        {
+            UnityEngine.Object.DestroyImmediate(systemsObject);
         }
 
         protected static T AddTestSystem<T>(GameObject systemsObject) where T : Component
