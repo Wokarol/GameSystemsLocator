@@ -94,6 +94,10 @@ else
 ```
 
 ## Changelog
+### v0.8.1
+- **Fix:** createIfNotPresent and required flags collide and produce an error needlessly
+- **Fix:** Warning is shown for no root, even when no createIfNotPresent systems are added
+
 ### v0.8.0
 - **Add:** noOverride flag
 - **Add:** createIfNotPresent flag
