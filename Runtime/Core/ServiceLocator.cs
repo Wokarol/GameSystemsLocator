@@ -47,7 +47,9 @@ namespace Wokarol.GameSystemsLocator.Core
             else
             {
                 var count = Systems.Count((system) => (system.Value.CreateIfNotPresent && system.Value.Instance == null));
-                Debug.LogWarning($"{count} systems with createIfNotPresent but no system root was provided. Therefore those systems will not be created");
+
+                if (count > 0)
+                    Debug.LogWarning($"{count} systems with createIfNotPresent but no system root was provided. Therefore those systems will not be created");
             }
 
             isInitialized = true;
@@ -242,7 +244,7 @@ namespace Wokarol.GameSystemsLocator.Core
                 }
                 else
                 {
-                    if (system.Value.Required && errorOnRequired)
+                    if (system.Value.Required && errorOnRequired && !system.Value.CreateIfNotPresent)
                         Debug.LogError($"The binding for {system.Key.FullName} is required");
                 }
             }
