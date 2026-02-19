@@ -1,6 +1,6 @@
 {
     "name": "com.wokarol.game-system-locator",
-    "version": "0.8.1",
+    "version": "0.8.2",
     "displayName": "Game System Locator",
     "description": "This package provides service locator and a bootstrapper for game systems",
     "documentationUrl": "https://github.com/Wokarol/GameSystemsLocator#usage",

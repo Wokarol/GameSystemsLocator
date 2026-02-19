@@ -94,6 +94,9 @@ else
 ```
 
 ## Changelog
+### v0.8.2
+- **QoL:** The systems start hidden on scene start, so things like HUD do not pollute the scene view 
+
 ### v0.8.1
 - **Fix:** createIfNotPresent and required flags collide and produce an error needlessly
 - **Fix:** Warning is shown for no root, even when no createIfNotPresent systems are added
