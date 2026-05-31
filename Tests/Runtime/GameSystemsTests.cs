@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Wokarol.GameSystemsLocator.Core;
 
 namespace Wokarol.GameSystemsLocator.Tests
@@ -23,7 +24,7 @@ namespace Wokarol.GameSystemsLocator.Tests
         {
             TestDelegate action = () => locator.Get<Foo>();
 
-            Assert.That(action, 
+            Assert.That(action,
                 Throws.Exception.TypeOf<InvalidOperationException>()
                 .And.Message.Matches("not.*initialized"));
         }
@@ -97,7 +98,7 @@ namespace Wokarol.GameSystemsLocator.Tests
             s =>
             {
                 s.Add<Foo>();
-            }, 
+            },
             b =>
             {
                 foo = AddTestSystem<Foo>(systemsObject);
@@ -378,6 +379,19 @@ namespace Wokarol.GameSystemsLocator.Tests
             Assert.That(logger.Errors, Has.Count.EqualTo(0));
             Assert.That(wasFooFound, Is.True);
             Assert.That(foundFoo.GetType(), Is.EqualTo(typeof(Foo)));
+        }
+
+
+        [Test]
+        public void Initialized_CreatesSystemIfNotPresent_WithInterface_ShowsError()
+        {
+            locator.Initialize(s =>
+            {
+                s.Add<IBax>(createIfNotPresent: true);
+            }, systemsObject);
+
+            Assert.That(logger.Errors, Has.Count.EqualTo(1));
+            Assert.That(logger.Errors[0], Does.Match(".*Issue.*abstract.*createIfNotPresent.*"));
         }
     }
 
@@ -721,6 +735,63 @@ namespace Wokarol.GameSystemsLocator.Tests
             locator.ApplyOverride(holder);
 
 
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled_Immediately_WhenHasNullObject()
+        {
+            var nullBax = new NullBax();
+
+            locator.Initialize(s =>
+            {
+                s.Add<IBax>(nullObject: nullBax);
+            }, b => null);
+
+
+            IBax bax = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<IBax>(b =>
+            {
+                bax = b;
+                callbackCallCount++;
+            });
+
+
+            Assert.That(bax, Is.EqualTo(nullBax));
+            Assert.That(callbackCallCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Overriten_GetWhenReadyCalled_AwaitsRealSystem_WhenHasNullObject()
+        {
+            var nullBax = new NullBax();
+
+            locator.Initialize(s =>
+            {
+                s.Add<IBax>(nullObject: nullBax);
+            }, b => null);
+
+
+            IBax bax = null;
+            int callbackCallCount = 0;
+
+            locator.GetWhenReady<IBax>(b =>
+            {
+                bax = b;
+                callbackCallCount++;
+            }, awaitOnlyBoundSystem: true);
+
+            Assert.That(bax, Is.EqualTo(null));
+
+            var holder = new GameObject("Systems");
+            var createdBar = AddTestSystem<Bar>(holder);
+
+            locator.ApplyOverride(holder);
+
+
+            Assert.That(bax, Is.EqualTo(createdBar));
             Assert.That(callbackCallCount, Is.EqualTo(1));
         }
     }

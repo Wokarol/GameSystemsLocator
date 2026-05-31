@@ -64,7 +64,7 @@ namespace Wokarol.GameSystemsLocator.Core
         {
             foreach (var system in Systems)
             {
-                if (system.Value.CreateIfNotPresent && system.Value.Instance == null)
+                if (system.Value.CreateIfNotPresent && system.Value.Instance == null && !system.Key.IsAbstract)
                 {
                     var systemHost = new GameObject(Regex.Replace(system.Key.Name, @"([a-z])([A-Z])", @"$1 $2"));
                     systemHost.transform.SetParent(root.transform);
@@ -147,14 +147,14 @@ namespace Wokarol.GameSystemsLocator.Core
         /// </summary>
         /// <param name="type"></param>
         /// <param name="callback"></param>
-        public void GetWhenReady<T>(Action<T> callback) where T : class => GetWhenReady(typeof(T), obj => callback((T)obj));
+        public void GetWhenReady<T>(Action<T> callback, bool awaitOnlyBoundSystem = false) where T : class => GetWhenReady(typeof(T), obj => callback((T)obj), awaitOnlyBoundSystem);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="type"></param>
         /// <param name="callback"></param>
-        public void GetWhenReady(Type type, Action<object> callback) // Consider adding a static-lambda-compatible override
+        public void GetWhenReady(Type type, Action<object> callback, bool awaitOnlyBoundSystem = false) // Consider adding a static-lambda-compatible override
         {
             AssertInitialization();
 
@@ -163,7 +163,7 @@ namespace Wokarol.GameSystemsLocator.Core
 
             var instance = boundSystem.Instance;
 
-            if (boundSystem.HasInstanceBound)
+            if (boundSystem.HasInstanceBound || (instance != null && !awaitOnlyBoundSystem))
             {
                 callback(instance);
                 return;
@@ -208,7 +208,7 @@ namespace Wokarol.GameSystemsLocator.Core
             AssertInitialization();
 
             if (holder != null)
-                RemoveSystemsFromObject(holder);
+                RemoveSystemsFromObject(holder, true);
 
             if (overrides != null)
             {
