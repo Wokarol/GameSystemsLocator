@@ -94,6 +94,12 @@ else
 ```
 
 ## Changelog
+### v0.8.3
+- **Add:** Error when createIfNotPresent is used together with an interface or abstract class
+- **Add:** Error when an Instance is null and shouldn't be
+- **Fix:** GetWhenReady gets a null object
+- **Fix:** Abstract implementations of ISystemConfiguration do not raise the "There can only be one system configuration" exception
+
 ### v0.8.2
 - **QoL:** The systems start hidden on scene start, so things like HUD do not pollute the scene view 
 

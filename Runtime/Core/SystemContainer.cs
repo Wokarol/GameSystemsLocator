@@ -37,8 +37,14 @@ namespace Wokarol.GameSystemsLocator.Core
                     ? null
                     : boundInstances[boundInstances.Count - 1];
 
-                if (boundInstance == null) // TODO: Check if the null check performed here actually catches fake Unity nulls
+                if (boundInstance == null)
                     return NullInstance;
+
+                if (boundInstances.Count > 0 && (boundInstance == null || boundInstance is UnityEngine.Object obj && obj == null))
+                {
+                    UnityEngine.Debug.LogError("Bound instance in the list is null. That suggests a system object was destroyed without being removed from the service locator");
+                    return NullInstance;
+                }
 
                 return boundInstance;
             }
