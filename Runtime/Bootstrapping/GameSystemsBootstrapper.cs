@@ -60,12 +60,16 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
             try
             {
                 GameSystems.Initialize(configurator.Configure, b => CreateSystemsIfNeeded(shouldSkipPrefab, b, temporaryHolder));
-            }
-            finally
-            {
+
+
                 UnityEngine.Object.DontDestroyOnLoad(temporaryHolder);
                 temporaryHolder.transform.DetachChildren();
                 UnityEngine.Object.Destroy(temporaryHolder);
+            }
+            catch
+            {
+                UnityEngine.Object.Destroy(temporaryHolder);
+                throw;
             }
         }
 
@@ -140,7 +144,7 @@ namespace Wokarol.GameSystemsLocator.Bootstrapping
         {
             var configuratorTypes = AppDomain.CurrentDomain.GetAssemblies()
                             .SelectMany(a => a.GetTypes())
-                            .Where(t => typeof(ISystemConfiguration).IsAssignableFrom(t) && t.IsClass)
+                            .Where(t => typeof(ISystemConfiguration).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
                             .Take(2)
                             .ToList();
 

@@ -47,6 +47,11 @@ namespace Wokarol.GameSystemsLocator.Core
         /// <param name="createIfNotPresent">Optional flag, if enabled will ensure the system is created during bootstrapping</param>
         public void Add(Type type, object nullObject, bool required = false, bool noOverride = false, bool createIfNotPresent = false)
         {
+            if (type.IsAbstract && createIfNotPresent)
+            {
+                UnityEngine.Debug.LogError($"Issue when adding {type.Name}: The added system cannot be both abstract or an interface and use createIfNotPresent");
+            }
+
             locator.Add(type, nullObject, required, noOverride, createIfNotPresent);
         }
     }
