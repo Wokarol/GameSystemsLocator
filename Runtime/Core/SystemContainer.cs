@@ -11,45 +11,6 @@ namespace Wokarol.GameSystemsLocator.Core
     {
         private readonly List<object> boundInstances = new List<object>();
 
-        internal Action<object> WhenReadyCallbacks = null;
-
-        public SystemContainer(object nullInstance, bool required, bool noOverride, bool createIfNotPresent)
-        {
-            NullInstance = nullInstance;
-            Required = required;
-            HasNoOverrides = noOverride;
-            CreateIfNotPresent = createIfNotPresent;
-        }
-
-        /// <summary>
-        /// List of instances bound to the container
-        /// </summary>
-        public IReadOnlyList<object> Instances => boundInstances;
-
-        /// <summary>
-        /// Newest instance bound to the container, considered the main one
-        /// </summary>
-        public object Instance
-        {
-            get
-            {
-                var boundInstance = boundInstances.Count == 0
-                    ? null
-                    : boundInstances[boundInstances.Count - 1];
-
-                if (boundInstance == null)
-                    return NullInstance;
-
-                if (boundInstances.Count > 0 && (boundInstance == null || boundInstance is UnityEngine.Object obj && obj == null))
-                {
-                    UnityEngine.Debug.LogError("Bound instance in the list is null. That suggests a system object was destroyed without being removed from the service locator");
-                    return NullInstance;
-                }
-
-                return boundInstance;
-            }
-        }
-
         /// <summary>
         /// Defaut object to be returned where there is no instance bound to the container.
         /// For more information see <see cref="ServiceLocatorBuilder.Add{T}(T, bool)"/>
@@ -74,6 +35,53 @@ namespace Wokarol.GameSystemsLocator.Core
         public readonly bool CreateIfNotPresent;
 
         internal bool HasInstanceBound => boundInstances.Count > 0;
+
+        internal bool MarkedForDestruction { get; set; }
+
+
+        internal Action<object> WhenReadyCallbacks = null;
+
+        public SystemContainer(object nullInstance, bool required, bool noOverride, bool createIfNotPresent)
+        {
+            NullInstance = nullInstance;
+            Required = required;
+            HasNoOverrides = noOverride;
+            CreateIfNotPresent = createIfNotPresent;
+            MarkedForDestruction = false;
+        }
+
+        /// <summary>
+        /// List of instances bound to the container
+        /// </summary>
+        public IReadOnlyList<object> Instances => boundInstances;
+
+        /// <summary>
+        /// Newest instance bound to the container, considered the main one
+        /// </summary>
+        public object Instance
+        {
+            get
+            {
+                var boundInstance = boundInstances.Count == 0
+                    ? null
+                    : boundInstances[boundInstances.Count - 1];
+
+                if (boundInstance == null)
+                    return NullInstance;
+
+                if (boundInstances.Count > 0 && (boundInstance == null || boundInstance is UnityEngine.Object obj && obj == null))
+                {
+                    // This property is set when the editor closes or the game stops by listening to the OnDestroy message on the root game object (provided or created)
+                    if (!MarkedForDestruction)
+                    {
+                        UnityEngine.Debug.LogError("Bound instance in the list is null. That suggests a system object was destroyed without being removed from the service locator");
+                        return NullInstance;
+                    }
+                }
+
+                return boundInstance;
+            }
+        }
 
         internal void BindInstance(object instance)
         {
