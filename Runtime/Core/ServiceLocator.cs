@@ -46,22 +46,32 @@ namespace Wokarol.GameSystemsLocator.Core
             if (root != null)
             {
                 BindSystemsFromObject(root);
-                CreateSystemThatAreNotPresent(root);
-                HideTheObjectInEditorIfPossible(root);
             }
             else
             {
-                var count = Systems.Count((system) => (system.Value.CreateIfNotPresent && system.Value.Instance == null));
-
-                if (count > 0)
-                    Debug.LogWarning($"{count} systems with createIfNotPresent but no system root was provided. Therefore those systems will not be created");
+                root = new GameObject("Game Systems Locator Root");
             }
+
+            var rootComponent = root.AddComponent<Components.SystemLocatorRoot>();
+            rootComponent.Destroyed += RootMarkedForDestruction;
+
+            CreateSystemThatAreNotPresent(root);
+            HideTheObjectInEditorIfPossible(root);
 
             isInitialized = true;
         }
 
+        private void RootMarkedForDestruction()
+        {
+            foreach (var container in systems)
+            {
+                container.Value.MarkedForDestruction = true;
+            }
+        }
+
         private void CreateSystemThatAreNotPresent(GameObject root)
         {
+
             foreach (var system in Systems)
             {
                 if (system.Value.CreateIfNotPresent && system.Value.Instance == null && !system.Key.IsAbstract)
@@ -99,7 +109,7 @@ namespace Wokarol.GameSystemsLocator.Core
         public bool TryGet<T>(out T system) where T : class
         {
             system = Get<T>();
-            return system != null;
+            return system is not null; // This should use the direct "is not" rather than "!=" check to prevent Unity Null triggering it for consistent behaviour when in OnDisable/OnDestroy
         }
 
         /// <summary>
@@ -111,7 +121,7 @@ namespace Wokarol.GameSystemsLocator.Core
         public bool TryGet(Type type, out object system)
         {
             system = Get(type);
-            return system != null;
+            return system is not null;
         }
 
         /// <summary>

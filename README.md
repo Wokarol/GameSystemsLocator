@@ -94,6 +94,9 @@ else
 ```
 
 ## Changelog
+### v0.8.4
+- **Fix:** "unity null" check fires when closing the game or stopping playmode
+
 ### v0.8.3
 - **Add:** Error when createIfNotPresent is used together with an interface or abstract class
 - **Add:** Error when an Instance is null and shouldn't be
